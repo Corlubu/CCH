@@ -9,6 +9,7 @@ import { config } from "vinxi/plugins/config";
 import { env } from "./src/server/env";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import { consoleForwardPlugin } from "./vite-console-forward-plugin";
+try {
 
 export default createApp({
   server: {
@@ -97,3 +98,8 @@ export default createApp({
     },
   ],
 });
+} catch (e) {
+  console.log("Validation failed on these keys:");
+  console.log(JSON.stringify(e, null, 2)); // Use JSON.stringify to avoid the Node inspect crash
+  process.exit(1);
+}
