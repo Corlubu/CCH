@@ -101,5 +101,5 @@ export default createApp({
 } catch (e) {
   console.log("Validation failed on these keys:");
   console.log(JSON.stringify(e, null, 2)); // Use JSON.stringify to avoid the Node inspect crash
-  process.exit(1);
+  throw e;
 }
