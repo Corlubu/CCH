@@ -1,6 +1,9 @@
+import { createTRPCContext, createTRPCRouter } from "~/server/trpc";
 import { defineEventHandler, toWebRequest } from "@tanstack/react-start/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./root";
+
+const router = createTRPCRouter();
 
 export default defineEventHandler((event) => {
   const request = toWebRequest(event);
@@ -12,11 +15,6 @@ export default defineEventHandler((event) => {
     endpoint: "/trpc",
     req: request,
     router: appRouter,
-    createContext() {
-      return {};
-    },
-    onError({ error, path }) {
-      console.error(`tRPC error on '${path}':`, error);
-    },
+    createContext: () => createTRPCContext({ req: request }),
   });
 });
