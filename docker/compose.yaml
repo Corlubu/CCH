@@ -5,13 +5,13 @@ services:
       - redis-data:/data
 
   postgres:
-    image: postgres:18
+    image: postgres:16
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: Postgresql@2025
-      POSTGRES_USER: postgres
-      POSTGRES_DB: app
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: cchadm
+      POSTGRES_DB: cch-pantry
     shm_size: 512MB
 
   minio:
@@ -24,7 +24,7 @@ services:
       MINIO_ROOT_PASSWORD: ${ADMIN_PASSWORD}
     ports:
       - "${LISTEN_IP:-127.0.0.1}:9000:9000"
-      - "${LISTEN_IP:-127.0.0.1}:9002:9002"
+      - "${LISTEN_IP:-127.0.0.1}:9001:9001"
 
   nginx:
     image: nginx:latest
@@ -93,10 +93,10 @@ services:
       /usr/bin/tini -- bash -c '
         echo "Applying database schema..."
         pnpm prisma db push --skip-generate
-
+        
         echo "Running setup script..."
         pnpm tsx src/server/scripts/setup.ts
-
+        
         if [ "$NODE_ENV" = "development" ]; then
           echo "Running in development mode"
           PORT=3000 pnpm dev
@@ -135,12 +135,12 @@ configs:
 
           function credentials() {
             // server, username and password for connecting to database
-            return array('postgres', 'Postgresql@2025', 'postgres');
+            return array('postgres', 'cchadm', 'postgres');
           }
 
           function database() {
             // database name, will be escaped by Adminer
-            return 'app';
+            return 'cch-pantry';
           }
 
           function schemas() {
@@ -154,15 +154,15 @@ configs:
         $$_POST['auth'] = [
           'driver'    => 'pgsql',
           'server'    => 'postgres',
-          'username'  => 'postgres',
-          'password'  => 'Postgresql@2025',
-          'db'        => 'app',
+          'username'  => 'cchadm',
+          'password'  => 'postgres',
+          'db'        => 'cch-pantry',
           'permanent' => 1,
         ];
       }
 
       $$_GET['pgsql'] = 'postgres';
-      $$_GET['username'] = 'postgres';
-      $$_GET['db'] = 'app';
+      $$_GET['username'] = 'cchadm';
+      $$_GET['db'] = 'cch-pantry';
 
       include './adminer.php';
