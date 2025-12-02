@@ -10,10 +10,21 @@ import { env } from "./src/server/env";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import { consoleForwardPlugin } from "./vite-console-forward-plugin";
 
+// Auto-detect platform
+const isVercel = Boolean(process.env.VERCEL || process.env.NEXT_RUNTIME);
+const isRender = Boolean(process.env.RENDER || process.env.PORT); // Render sets PORT
+
+// Choose preset
+const serverPreset = isVercel 
+  ? "vercel" 
+  : "node-server"; // Works for Render, Railway, Docker, local, etc.
+
+console.log("🚀 Detected platform:", isVercel ? "Vercel" : isRender ? "Render" : "Local");
+console.log("⚙️ Using server preset:", serverPreset);
+
 export default createApp({
   server: {
-    preset: "vercel", // for run in vercel and render
-    ////preset: "node-server", // for run in vercel and render
+    preset: serverPreset,    
     experimental: {
       asyncContext: true,
     },
