@@ -12,7 +12,7 @@ import { consoleForwardPlugin } from "./vite-console-forward-plugin";
 
 export default createApp({
   server: {
-    preset: "vercel", // change to 'netlify' or 'bun' or anyof the supported presets for nitro (nitro.unjs.io)
+    preset: "vercel", // for run in vercel
     experimental: {
       asyncContext: true,
     },
