@@ -11,7 +11,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: cchadm
-      POSTGRES_DB: cch-pantry
+      POSTGRES_DB: cchpantry
     shm_size: 512MB
 
   minio:
@@ -140,7 +140,7 @@ configs:
 
           function database() {
             // database name, will be escaped by Adminer
-            return 'cch-pantry';
+            return 'cchpantry';
           }
 
           function schemas() {
@@ -156,13 +156,13 @@ configs:
           'server'    => 'postgres',
           'username'  => 'cchadm',
           'password'  => 'postgres',
-          'db'        => 'cch-pantry',
+          'db'        => 'cchpantry',
           'permanent' => 1,
         ];
       }
 
       $$_GET['pgsql'] = 'postgres';
       $$_GET['username'] = 'cchadm';
-      $$_GET['db'] = 'cch-pantry';
+      $$_GET['db'] = 'cchpantry';
 
       include './adminer.php';
