@@ -29,7 +29,7 @@ export default createApp({
       asyncContext: true,
     },
      nitro: {
-    ///plugins: ["./server/utils/xlsx-assets"],
+      plugins: ["./server/utils/xlsx-assets"],
        externals: {
         external: ["xlsx"],
       },
