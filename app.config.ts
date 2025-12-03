@@ -28,24 +28,9 @@ export default createApp({
     experimental: {
       asyncContext: true,
     },
-      nitro: {
-      rollupConfig: {
-        plugins: [],
-      },
-      // Ensure xlsx optional dependencies are bundled
-      externals: {
-        // Don't externalize xlsx — bundle it fully
-        inline: ["xlsx"],
-      },
-      // Copy missing assets manually
-      publicAssets: [
-        {
-          dir: "node_modules/.pnpm/xlsx@0.18.5/node_modules/xlsx/dist",
-          maxAge: 31536000,
-          baseURL: "/_xlsx_dist",
-        },
-      ],
-    },
+     nitro: {
+    plugins: ["./server/utils/xlsx-assets"],
+  },
   },
   routers: [
     {
