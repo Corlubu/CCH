@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://cchadm:Postgresql@2025@localhost:5432/cchpantry" // hardcoded because it's an internal docker connection
+  url      = "postgresql://cchadm:3DvGb5Lfj5LDum27ZIagqWOeywNtobfw@dpg-d4niarmmcj7s73dhrfr0-a.oregon-postgres.render.com/cchpantry" // hardcoded because it's an internal docker connection
 }
 
 enum UserRole {
