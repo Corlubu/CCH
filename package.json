@@ -58,6 +58,13 @@
     "zustand": "^5.0.8",
     "twilio": "^5.10.5",
     "xlsx": "^0.18.5",
+    "vercel": {
+      "functions": {
+        "api/*.js": {
+          "includeFiles": "node_modules/xlsx/dist/**"
+        }
+      }
+    },
     "dotenv": "^17.2.3"
   },
   "devDependencies": {
