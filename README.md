@@ -1,4 +1,4 @@
-# Grace Community Food Bank Management System
+# CCH Food Bank Management System
 
 A comprehensive web application for managing food bank registrations and distributions at a Christian church. The system handles administrator operations, staff management, and citizen registrations through QR codes with robust validation and SMS notifications.
 
