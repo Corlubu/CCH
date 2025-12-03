@@ -4,7 +4,8 @@ import { db } from "~/server/db";
 import { baseProcedure } from "~/server/trpc/main";
 import { env } from "~/server/env";
 import jwt from "jsonwebtoken";
-import * as XLSX from "xlsx";
+import { set_cptable } from 'xlsx';
+import * as cptable from 'xlsx/dist/cpexcel.full.mjs';
 
 export const exportRegistrationDataExcel = baseProcedure
   .input(
