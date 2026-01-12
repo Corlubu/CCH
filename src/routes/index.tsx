@@ -454,7 +454,7 @@ function Home() {
               </span>
             </div>
             <div className="text-gray-400">
-              © 2025 {BRAND_CONFIG.copyrightName}. All rights reserved.
+              © 2026 {BRAND_CONFIG.copyrightName}. All rights reserved.
             </div>
           </div>
         </div>
