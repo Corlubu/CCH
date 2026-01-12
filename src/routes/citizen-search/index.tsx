@@ -1,3 +1,5 @@
+// src/routes/citizen-search/index.tsx
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -195,7 +197,7 @@ function CitizenSearchPage() {
                       setHasSearched(false);
                     }}
                     className="block w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 font-mono focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="CCH-XXXXX-XXXXX"
+                    placeholder="ORD-XXXXX-XXXXX"
                     required
                   />
                 </div>
@@ -359,23 +361,25 @@ function CitizenSearchPage() {
                       </div>
                     )}
 
-                    <button
-                      onClick={() =>
-                        setSelectedRegistration({
-                          orderNumber: reg.orderNumber,
-                          qrCodeUrl: reg.qrCodeUrl,
-                          searchUrl: reg.searchUrl,
-                          eventName: reg.eventName,
-                          eventStartDatetime: reg.eventStartDatetime,
-                          eventEndDatetime: reg.eventEndDatetime,
-                          fullName: reg.fullName,
-                        })
-                      }
-                      className="mt-4 flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-                    >
-                      <QrCode className="h-4 w-4" />
-                      <span>View QR Code</span>
-                    </button>
+                    {reg.eventStatus !== "COMPLETED" && (
+                      <button
+                        onClick={() =>
+                          setSelectedRegistration({
+                            orderNumber: reg.orderNumber,
+                            qrCodeUrl: reg.qrCodeUrl,
+                            searchUrl: reg.searchUrl,
+                            eventName: reg.eventName,
+                            eventStartDatetime: reg.eventStartDatetime,
+                            eventEndDatetime: reg.eventEndDatetime,
+                            fullName: reg.fullName,
+                          })
+                        }
+                        className="mt-4 flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                      >
+                        <QrCode className="h-4 w-4" />
+                        <span>View QR Code</span>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -447,3 +451,4 @@ function CitizenSearchPage() {
     </div>
   );
 }
+
