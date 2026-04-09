@@ -188,7 +188,7 @@ function RegisterPage() {
               </div>
             </div>
             <h1 className="mb-4 text-center text-3xl font-bold text-gray-900">
-              Registration Successful! / {" "}
+              Registration Successful! /
               <span className="text-blue-600">¡Registro completado con éxito!</span>
               
             </h1>
@@ -200,7 +200,7 @@ function RegisterPage() {
             <div className="mb-8 rounded-xl bg-blue-50 p-6">
               <p className="mb-2 text-center text-sm font-medium text-gray-700">
                 Your Order Number {" "}
-              <span className="text-blue-600">(Sú número de orden)
+              <span className="text-blue-600">(Sú número de orden)</span>
               </p>
               <p className="text-center text-3xl font-bold text-blue-600">
                 {orderNumber}
