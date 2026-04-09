@@ -168,7 +168,7 @@ function RegisterPage() {
         toast.success(data.message);
       },
       onError: (error) => {
-        toast.error(error.message || "Registration failed");
+        toast.error(error.message || "Registration failed/Fallo Registro");
       },
     })
   );
@@ -188,14 +188,16 @@ function RegisterPage() {
               </div>
             </div>
             <h1 className="mb-4 text-center text-3xl font-bold text-gray-900">
-              Registration Successful!
+              Registration Successful! / ¡Registro completado con éxito!
+              
             </h1>
             <p className="mb-6 text-center text-gray-600">
-              Thank you for registering. You will receive an SMS confirmation shortly.
+              Thank you for registering. You will receive an SMS confirmation shortly.<br />
+              Gracias por registrarte. En breve recibirás un SMS de confirmación.
             </p>
             <div className="mb-8 rounded-xl bg-blue-50 p-6">
               <p className="mb-2 text-center text-sm font-medium text-gray-700">
-                Your Order Number
+                Your Order Number (Sú número de orden)
               </p>
               <p className="text-center text-3xl font-bold text-blue-600">
                 {orderNumber}
@@ -204,7 +206,8 @@ function RegisterPage() {
               {qrCodeUrl && (
                 <div className="mt-6">
                   <p className="mb-3 text-center text-sm font-medium text-gray-700">
-                    Scan this QR code to view your registration
+                    Scan this QR code to view your registration<br />
+                    Escanea este código QR para ver tu inscripción
                   </p>
                   <div className="flex justify-center">
                     <img 
@@ -214,13 +217,15 @@ function RegisterPage() {
                     />
                   </div>
                   <p className="mt-3 text-center text-xs text-gray-600">
-                    Save this QR code to quickly access your registration details
+                    Save this QR code to quickly access your registration details<br />
+                    Guarda este código QR para acceder rápidamente a los datos de tu inscripción
                   </p>
                 </div>
               )}
               
               <p className="mt-4 text-center text-sm text-gray-600">
-                Please save this number and present it when picking up your food bag.
+                Please save this number and present it when picking up your food bag.<br />
+                Guarda este número y preséntalo cuando vayas a recoger tu bolsa de comida.
               </p>
             </div>
             <div className="space-y-3">
@@ -228,7 +233,7 @@ function RegisterPage() {
                 to="/"
                 className="block w-full rounded-lg bg-blue-600 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
               >
-                Return to Home
+                Return to Home (Regresar)
               </Link>
             </div>
           </div>
@@ -284,7 +289,7 @@ function RegisterPage() {
                     htmlFor="eventId"
                     className="mb-2 block text-sm font-medium text-gray-700"
                   >
-                    Select Event <span className="text-red-500">*</span>
+                    Select Event (Seleccionar Evento)<span className="text-red-500">*</span>
                   </label>
                   {eventsQuery.isLoading || (session && sessionEventQuery.isLoading) ? (
                     <div className="rounded-lg border border-gray-300 p-4 text-center text-gray-500">
@@ -306,7 +311,8 @@ function RegisterPage() {
                     </select>
                   ) : (
                     <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-center text-yellow-800">
-                      No active events available at this time. Please check back later.
+                      No active events available at this time. Please check back later.<br />
+                      No hay eventos activos disponibles en este momento. Vuelve a consultar más tarde.
                     </div>
                   )}
                   {errors.eventId && (
@@ -319,7 +325,8 @@ function RegisterPage() {
                 {/* TEFAP Information and Income Guidelines */}
                 <div className="space-y-6 rounded-lg bg-blue-50 p-6">
                   <p className="text-sm text-gray-700">
-                    If your household income is at or below the income listed for the number of people in your household, you are eligible to receive food.
+                    If your household income is at or below the income listed for the number of people in your household, you are eligible to receive food.<br />
+                    Si los ingresos de su hogar son iguales o inferiores a los indicados para el número de personas que lo componen, tiene derecho a recibir ayuda alimentaria.
                   </p>
                   
                   <div>
@@ -420,7 +427,7 @@ function RegisterPage() {
                 {/* Personal Information Section - TEFAP Format */}
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-                    Applicant Information
+                    Applicant Information (Datos del Solicitante)
                   </h3>
 
                   {/* Name - Full name on one line */}
@@ -430,7 +437,7 @@ function RegisterPage() {
                         htmlFor="firstName"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        First Name <span className="text-red-500">*</span>
+                        First Name (Primer Nombre) <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="firstName"
@@ -451,7 +458,7 @@ function RegisterPage() {
                         htmlFor="middleName"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        Middle Name
+                        Middle Name (Segundo Nombre)
                       </label>
                       <input
                         id="middleName"
@@ -467,7 +474,7 @@ function RegisterPage() {
                         htmlFor="lastName"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        Last Name <span className="text-red-500">*</span>
+                        Last Name (Apellidos) <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="lastName"
@@ -491,7 +498,7 @@ function RegisterPage() {
                         htmlFor="totalIndividuals"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        Number of People in Household <span className="text-red-500">*</span>
+                        Number of People in Household (# personas en el hogar) <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="totalIndividuals"
@@ -513,7 +520,7 @@ function RegisterPage() {
                         htmlFor="county"
                         className="mb-2 block text-sm font-medium text-gray-700"
                       >
-                        County
+                        County (Condado)
                       </label>
                       <input
                         id="county"
@@ -534,7 +541,7 @@ function RegisterPage() {
                 {/* Address Information Section */}
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-                    Address Information
+                    Address Information (Datos de Contacto)
                   </h3>
 
                   {/* Homeless Checkbox */}
@@ -552,7 +559,8 @@ function RegisterPage() {
                         Homeless (No residence)
                       </label>
                       <p className="text-xs text-gray-500">
-                        Check this box if you do not have a permanent address
+                        Check this box if you do not have a permanent address <br />
+                        (Marca esta casilla si no tienes una dirección fija)
                       </p>
                     </div>
                   </div>
@@ -566,7 +574,7 @@ function RegisterPage() {
                           htmlFor="address"
                           className="mb-2 block text-sm font-medium text-gray-700"
                         >
-                          Street Address
+                          Street Address (Dirección)
                         </label>
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -593,7 +601,7 @@ function RegisterPage() {
                           htmlFor="apartmentSuite"
                           className="mb-2 block text-sm font-medium text-gray-700"
                         >
-                          Apartment/Suite <span className="text-gray-400">(Optional)</span>
+                          Apartment/Suite (Apartamento) <span className="text-gray-400">(Optional/Opcional)</span>
                         </label>
                         <input
                           id="apartmentSuite"
@@ -616,7 +624,7 @@ function RegisterPage() {
                             htmlFor="cityTown"
                             className="mb-2 block text-sm font-medium text-gray-700"
                           >
-                            City/Town
+                            City/Town (Ciudad)
                           </label>
                           <input
                             id="cityTown"
@@ -637,7 +645,7 @@ function RegisterPage() {
                             htmlFor="stateProvince"
                             className="mb-2 block text-sm font-medium text-gray-700"
                           >
-                            State/Province
+                            State/Province (Estado)
                           </label>
                           <input
                             id="stateProvince"
@@ -660,7 +668,7 @@ function RegisterPage() {
                           htmlFor="country"
                           className="mb-2 block text-sm font-medium text-gray-700"
                         >
-                          Country
+                          Country (País)
                         </label>
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -689,7 +697,7 @@ function RegisterPage() {
                       htmlFor="zipPostalCode"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Zip/Postal Code
+                      Zip/Postal Code (Código Postal)
                     </label>
                     <input
                       id="zipPostalCode"
@@ -709,7 +717,7 @@ function RegisterPage() {
                 {/* Contact Information Section */}
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-                    Contact Information
+                    Contact Information (Información de Contacto)
                   </h3>
 
                   {/* Phone Number */}
@@ -718,7 +726,7 @@ function RegisterPage() {
                       htmlFor="phoneNumber"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Phone Number <span className="text-red-500">*</span>
+                      Phone Number (Número Teléfono)<span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -738,7 +746,8 @@ function RegisterPage() {
                       </p>
                     )}
                     <p className="mt-1 text-xs text-gray-500">
-                      You'll receive an SMS confirmation at this number
+                      You'll receive an SMS confirmation at this number<br />
+                      Recibirás un SMS de confirmación en este número
                     </p>
                   </div>
 
@@ -748,7 +757,7 @@ function RegisterPage() {
                       htmlFor="email"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Email Address <span className="text-gray-400">(Optional)</span>
+                      Email Address (Correo Electrónico) <span className="text-gray-400">(Optional)</span>
                     </label>
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -774,7 +783,9 @@ function RegisterPage() {
                 <div className="space-y-6">
                   <div>
                     <p className="mb-4 text-sm text-gray-700">
-                      You are eligible to receive food from TEFAP if your household meets the income guidelines above or participates in any of the following programs. Please place a checkmark in the space next to the category that applies.
+                      You are eligible to receive food from TEFAP if your household meets the income guidelines above or participates in any of the following programs. Please place a checkmark in the space next to the category that applies.<br />
+                      Tiene derecho a recibir alimentos del TEFAP si su hogar cumple los requisitos de ingresos indicados anteriormente o participa en alguno de los siguientes programas. Marque con una cruz la casilla correspondiente a la categoría que le corresponda.
+                      
                     </p>
                   </div>
 
@@ -791,7 +802,7 @@ function RegisterPage() {
                       </div>
                       <div className="ml-3">
                         <label htmlFor="incomeEligibility" className="text-sm font-medium text-gray-700">
-                          Income eligibility
+                          Income eligibility (Elegibilidad por Ingresos)
                         </label>
                       </div>
                     </div>
@@ -871,7 +882,7 @@ function RegisterPage() {
                       htmlFor="incomeSalary"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Annual Income/Salary <span className="text-gray-400">(Optional)</span>
+                      Annual Income/Salary (Ingresos anuales/Salario)<span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -893,7 +904,8 @@ function RegisterPage() {
                       </p>
                     )}
                     <p className="mt-1 text-xs text-gray-500">
-                      Enter your total annual household income
+                      Enter your total annual household income<br />
+                      Introduce los ingresos anuales totales de tu hogar
                     </p>
                   </div>
                 </div>
@@ -904,7 +916,7 @@ function RegisterPage() {
                     htmlFor="alternatePickupPerson"
                     className="mb-2 block text-sm font-medium text-gray-700"
                   >
-                    Alternate Pick-up Person <span className="text-gray-400">(Optional)</span>
+                    Alternate Pick-up Person (Persona alternativa para recoger la comida) <span className="text-gray-400">(Optional)</span>
                   </label>
                   <input
                     id="alternatePickupPerson"
@@ -919,7 +931,8 @@ function RegisterPage() {
                     </p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
-                    If someone else will be picking up on your behalf
+                    If someone else will be picking up on your behalf<br />
+                    Si otra persona va a recogerlo en tu nombre
                   </p>
                 </div>
 
@@ -931,7 +944,9 @@ function RegisterPage() {
                     </p>
                     <div className="rounded-lg border border-gray-300 bg-white p-4">
                       <p className="mb-4 text-sm text-gray-700">
-                        I certify, by self attesting, that my yearly household gross income is at or below the income listed on this form for households with the same number of people OR that I participate in the program(s) that I have checked on this form. I also certify that as of today, I reside in the State of Florida. This certification is being submitted in connection with the receipt of Federal assistance. I understand that making a false certification may result in having to pay the State agency for the value of the food improperly issued to me and may subject me to civil or criminal prosecution under State and Federal law.
+                        I certify, by self attesting, that my yearly household gross income is at or below the income listed on this form for households with the same number of people OR that I participate in the program(s) that I have checked on this form. I also certify that as of today, I reside in the State of Florida. This certification is being submitted in connection with the receipt of Federal assistance. I understand that making a false certification may result in having to pay the State agency for the value of the food improperly issued to me and may subject me to civil or criminal prosecution under State and Federal law.<br />
+                        Certifico, mediante declaración jurada, que el ingreso bruto anual de mi hogar es igual o inferior al ingreso indicado en este formulario para hogares con el mismo número de personas, O bien, que participo en el(los) programa(s) que he marcado en este formulario. Asimismo, certifico que, a la fecha de hoy, resido en el Estado de Florida. Esta certificación se presenta en relación con la recepción de asistencia federal. Entiendo que realizar una certificación falsa puede resultar en la obligación de reembolsar a la agencia estatal el valor de los alimentos que se me hayan emitido indebidamente, y puede exponerme a procesos civiles o penales conforme a las leyes estatales y federales.
+                        
                       </p>
                       <p className="mb-4 text-sm text-gray-700">
                         <strong>OPTIONAL:</strong> I authorize <span className="inline-block w-48 border-b border-gray-400">{watch("alternatePickupPerson") || ""}</span> to pick up USDA foods on my behalf.
@@ -948,7 +963,8 @@ function RegisterPage() {
                       htmlFor="digitalSignature"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Digital Signature (Type your full name) <span className="text-red-500">*</span>
+                      Digital Signature (Type your full name)<br /> 
+                      Firma digital (Escriba su nombre completo) <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="digitalSignature"
@@ -963,7 +979,8 @@ function RegisterPage() {
                       </p>
                     )}
                     <p className="mt-1 text-xs text-gray-500">
-                      By typing your name, you are digitally signing this certification
+                      By typing your name, you are digitally signing this certification<br />
+                      Al escribir tu nombre, estás firmando digitalmente esta certificación
                     </p>
                   </div>
                 </div>
@@ -1066,6 +1083,30 @@ function RegisterPage() {
                 <li className="flex items-start space-x-2">
                   <span className="mt-0.5 text-blue-600">•</span>
                   <span>Free nutritious food packages</span>
+                </li>
+              </ul>
+            </div><br />
+            <div className="rounded-2xl bg-blue-50 p-6">
+              <h3 className="mb-3 flex items-center space-x-2 font-bold text-gray-900">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <span>Qué esperar</span>
+              </h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Confirmación por SMS con número de pedido</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Una inscripción cada 14 días</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Presente el número de pedido al recogerlo.</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Paquetes de alimentos nutritivos gratuitos</span>
                 </li>
               </ul>
             </div>
