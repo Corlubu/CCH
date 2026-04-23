@@ -1425,12 +1425,13 @@ function StaffDashboard() {
               <div className="flex space-x-3">
                 <button
                   type="submit"
-                  disabled={registerMutation.isPending}
+                  disabled={registerMutation.isPending || isEventFull}
                   className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
                 >
                   {registerMutation.isPending
                     ? "Registering..."
                     : "Complete Registration"}
+                    {isEventFull ? "No bags are available (No hay bolsas disponibles)" : "Complete Registration"}
                 </button>
                 <button
                   type="button"

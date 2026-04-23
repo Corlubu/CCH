@@ -133,7 +133,7 @@ export const registerCitizen = baseProcedure
     if (event.registeredCount >= event.availableBags) {
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message: "This event has reached maximum capacity",
+        message: "Food bags are currently unavailable. Please check back for the next distribution (No hay disponibilidad de bolsas de comida. Por favor, esté pendiente del próximo registro.)",
       });
     }
 

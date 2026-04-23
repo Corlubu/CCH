@@ -132,25 +132,27 @@ function RegisterPage() {
   // Merge session event into events list if it exists and isn't already there
   const availableEvents = useMemo(() => {
     if (!eventsQuery.data) return [];
-    
+
     // If we have a session event, ensure it's in the list
     if (session && sessionEventQuery.data) {
       const sessionEventExists = eventsQuery.data.some(
         (e) => e.id === sessionEventQuery.data.id
       );
-      
+
       if (!sessionEventExists) {
         // Add the session event to the beginning of the list
         return [sessionEventQuery.data, ...eventsQuery.data];
       }
     }
-    
+
     return eventsQuery.data;
   }, [eventsQuery.data, session, sessionEventQuery.data]);
 
   const selectedEventId = watch("eventId");
+  const selectedEvent = eventsQuery.data?.find(e => e.id === selectedEventId);
+  const isEventFull = selectedEvent && selectedEvent.remainingBags <= 0;
   const isHomeless = watch("isHomeless");
-  
+
   // Determine the selected event
   // When a session is provided, use the session event directly
   // Otherwise, find it from the active events list
@@ -190,7 +192,7 @@ function RegisterPage() {
             <h1 className="mb-4 text-center text-3xl font-bold text-gray-900">
               Registration Successful! /
               <span className="text-blue-600">¡Registro completado con éxito!</span>
-              
+
             </h1>
             <p className="mb-6 text-center text-gray-600">
               Thank you for registering. You will receive an SMS confirmation shortly.<br />
@@ -205,7 +207,7 @@ function RegisterPage() {
               <p className="text-center text-3xl font-bold text-blue-600">
                 {orderNumber}
               </p>
-              
+
               {qrCodeUrl && (
                 <div className="mt-6">
                   <p className="mb-3 text-center text-sm font-medium text-gray-700">
@@ -214,9 +216,9 @@ function RegisterPage() {
                     Escanea este código QR para ver tu inscripción</span>
                   </p>
                   <div className="flex justify-center">
-                    <img 
-                      src={qrCodeUrl} 
-                      alt="Order Number QR Code" 
+                    <img
+                      src={qrCodeUrl}
+                      alt="Order Number QR Code"
                       className="rounded-lg border-4 border-white shadow-lg"
                     />
                   </div>
@@ -227,7 +229,7 @@ function RegisterPage() {
                   </p>
                 </div>
               )}
-              
+
               <p className="mt-4 text-center text-sm text-gray-600">
                 Please save this number and present it when picking up your food bag.<br />{" "}
                 <span className="text-blue-600">
@@ -334,10 +336,10 @@ function RegisterPage() {
                 <div className="space-y-6 rounded-lg bg-blue-50 p-6">
                   <p className="text-sm text-gray-700">
                     If your household income is at or below the income listed for the number of people in your household, you are eligible to receive food.<br />{" "}
-                    <span className="text-blue-600">        
+                    <span className="text-blue-600">
                     Si los ingresos de su hogar son iguales o inferiores a los indicados para el número de personas que lo componen, tiene derecho a recibir ayuda alimentaria.</span>
                   </p>
-                  
+
                   <div>
                     <h4 className="mb-3 text-center font-bold text-gray-900">
                       TEFAP Income Eligibility Guidelines - 2025
@@ -796,7 +798,7 @@ function RegisterPage() {
                     <p className="mb-4 text-sm text-gray-700">
                       You are eligible to receive food from TEFAP if your household meets the income guidelines above or participates in any of the following programs. Please place a checkmark in the space next to the category that applies.<br />
                       <span className="text-blue-600">Tiene derecho a recibir alimentos del TEFAP si su hogar cumple los requisitos de ingresos indicados anteriormente o participa en alguno de los siguientes programas. Marque con una cruz la casilla correspondiente a la categoría que le corresponda.</span>
-                      
+
                     </p>
                   </div>
 
@@ -958,7 +960,7 @@ function RegisterPage() {
                       <p className="mb-4 text-sm text-gray-700">
                         I certify, by self attesting, that my yearly household gross income is at or below the income listed on this form for households with the same number of people OR that I participate in the program(s) that I have checked on this form. I also certify that as of today, I reside in the State of Florida. This certification is being submitted in connection with the receipt of Federal assistance. I understand that making a false certification may result in having to pay the State agency for the value of the food improperly issued to me and may subject me to civil or criminal prosecution under State and Federal law.<br />
                         <span className="text-blue-600">Certifico, mediante declaración jurada, que el ingreso bruto anual de mi hogar es igual o inferior al ingreso indicado en este formulario para hogares con el mismo número de personas, O bien, que participo en el(los) programa(s) que he marcado en este formulario. Asimismo, certifico que, a la fecha de hoy, resido en el Estado de Florida. Esta certificación se presenta en relación con la recepción de asistencia federal. Entiendo que realizar una certificación falsa puede resultar en la obligación de reembolsar a la agencia estatal el valor de los alimentos que se me hayan emitido indebidamente, y puede exponerme a procesos civiles o penales conforme a las leyes estatales y federales.</span>
-                        
+
                       </p>
                       <p className="mb-4 text-sm text-gray-700">
                         <strong>OPTIONAL:</strong> I authorize <span className="inline-block w-48 border-b border-gray-400">{watch("alternatePickupPerson") || ""}</span> to pick up USDA foods on my behalf.
@@ -975,7 +977,7 @@ function RegisterPage() {
                       htmlFor="digitalSignature"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Digital Signature (Type your full name)<br /> 
+                      Digital Signature (Type your full name)<br />
                       Firma digital <span className="text-blue-600">(Escriba su nombre completo)</span> <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1017,16 +1019,30 @@ function RegisterPage() {
                     This institution is an equal opportunity provider.
                   </p>
                 </div>
-
+                  {isEventFull && (
+                    <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-center">
+                      <p className="text-sm font-bold text-red-800">
+                        We're sorry, but meal bags are not available for this event.(Lo sentimos, no hay disponibilidad de bolsas de comida para este evento.)
+                      </p>
+                      <p className="text-xs text-red-700 mt-1">
+                        Por favor, esté pendiente del próximo registro.
+                      </p>
+                    </div>
+                  )}
                 <button
                   type="submit"
                   disabled={
-                    registerMutation.isPending || 
+                    registerMutation.isPending ||
+                    isEventFull ||
                     (!session && (!availableEvents || availableEvents.length === 0))
                   }
                   className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
                 >
-                  {registerMutation.isPending ? "Registering..." : "Complete Registration"}
+                 {registerMutation.isPending
+                  ? "Registering..."
+                  : isEventFull
+                    ? "Event Full (Cupo Lleno)"
+                    : "Complete Registration"}
                 </button>
               </form>
             </div>
