@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -101,10 +101,10 @@ function RegisterPage() {
   // Update form when session event is loaded
   useEffect(() => {
     if (session && sessionEventQuery.data) {
-      reset((prev) => ({
-        ...prev,
+      reset({
+        ...registrationSchema.parse({}), // Get default empty values
         eventId: sessionEventQuery.data.id,
-      }));
+      });
     }
   }, [session, sessionEventQuery.data, reset]);
 
@@ -126,9 +126,8 @@ function RegisterPage() {
   }, [eventsQuery.data, session, sessionEventQuery.data]);
 
   const selectedEventId = watch("eventId");
-  const isHomeless = watch("isHomeless");
 
-  // DETERMINACIÓN DEL EVENTO SELECCIONADO (Única declaración corregida)
+  // ÚNICA DECLARACIÓN DE selectedEvent para evitar el error de duplicidad
   const selectedEvent = useMemo(() => {
     if (session && sessionEventQuery.data) {
       return sessionEventQuery.data;
@@ -136,8 +135,13 @@ function RegisterPage() {
     return eventsQuery.data?.find((e) => e.id === selectedEventId);
   }, [session, sessionEventQuery.data, eventsQuery.data, selectedEventId]);
 
-  // Control de disponibilidad de bolsas
-  const isEventFull = selectedEvent && (selectedEvent.availableBags - selectedEvent.registeredCount) <= 0;
+  // Control de disponibilidad de bolsas: Si el evento existe, calculamos si está lleno
+  const isEventFull = useMemo(() => {
+    if (!selectedEvent) return false;
+    // Usamos remainingBags si existe, de lo contrario calculamos manualmente
+    const remaining = selectedEvent.remainingBags ?? (selectedEvent.availableBags - selectedEvent.registeredCount);
+    return remaining <= 0;
+  }, [selectedEvent]);
 
   const registerMutation = useMutation(
     trpc.registerCitizen.mutationOptions({
@@ -263,11 +267,14 @@ function RegisterPage() {
                       disabled={!!session}
                     >
                       <option value={0}>Choose an event...</option>
-                      {availableEvents.map((event) => (
-                        <option key={event.id} value={event.id}>
-                          {event.name} - {event.availableBags - event.registeredCount} bags available
-                        </option>
-                      ))}
+                      {availableEvents.map((event) => {
+                         const remaining = event.remainingBags ?? (event.availableBags - event.registeredCount);
+                         return (
+                          <option key={event.id} value={event.id}>
+                            {event.name} - {remaining > 0 ? `${remaining} bags available` : 'FULL / AGOTADO'}
+                          </option>
+                        );
+                      })}
                     </select>
                   ) : (
                     <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-center text-yellow-800">
@@ -277,7 +284,6 @@ function RegisterPage() {
                   {errors.eventId && <p className="mt-1 text-sm text-red-600">{errors.eventId.message}</p>}
                 </div>
 
-                {/* Campos del formulario omitidos por brevedad pero deben estar aquí (Nombre, Dirección, etc) */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">First Name *</label>
@@ -299,9 +305,9 @@ function RegisterPage() {
                     <input type="text" {...register("digitalSignature")} className="block w-full rounded-lg border border-gray-300 py-3 px-3 italic" placeholder="Type full name" />
                 </div>
 
-                {/* MENSAJE DE ADVERTENCIA DE CUPO LLENO */}
+                {/* MENSAJE DE ADVERTENCIA DE CUPO LLENO (Implementado) */}
                 {isEventFull && (
-                  <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-center">
+                  <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-center animate-pulse">
                     <p className="text-sm font-bold text-red-800">
                       We're sorry, but meal bags are not available for this event.
                     </p>
@@ -315,15 +321,16 @@ function RegisterPage() {
                   type="submit"
                   disabled={
                     registerMutation.isPending ||
-                    isEventFull ||
-                    (!session && availableEvents.length === 0)
+                    isEventFull || // Deshabilita el botón si no hay disponibilidad
+                    (!session && availableEvents.length === 0) ||
+                    selectedEventId === 0
                   }
                   className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
                 >
                   {registerMutation.isPending
                     ? "Registering..."
                     : isEventFull
-                    ? "Event Full (Cupo Lleno)"
+                    ? "No Availability (Cupo Lleno)"
                     : "Complete Registration"}
                 </button>
               </form>
@@ -340,12 +347,19 @@ function RegisterPage() {
                   <div>
                     <div className="flex justify-between mb-1">
                       <span>Availability:</span>
-                      <span className="font-bold">{selectedEvent.registeredCount} / {selectedEvent.availableBags}</span>
+                      <span className={`font-bold ${isEventFull ? 'text-red-600' : 'text-gray-900'}`}>
+                        {selectedEvent.registeredCount} / {selectedEvent.availableBags}
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                       <div className="h-full bg-blue-600" style={{ width: `${(selectedEvent.registeredCount / selectedEvent.availableBags) * 100}%` }} />
+                       <div
+                        className={`h-full ${isEventFull ? 'bg-red-500' : 'bg-blue-600'}`}
+                        style={{ width: `${Math.min((selectedEvent.registeredCount / selectedEvent.availableBags) * 100, 100)}%` }}
+                       />
                     </div>
-                    <p className="mt-2 text-green-600 font-bold">{selectedEvent.remainingBags} bags remaining</p>
+                    <p className={`mt-2 font-bold ${isEventFull ? 'text-red-600' : 'text-green-600'}`}>
+                      {Math.max(0, selectedEvent.availableBags - selectedEvent.registeredCount)} bags remaining
+                    </p>
                   </div>
                 </div>
               </div>
