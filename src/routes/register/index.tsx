@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/react";
 import toast from "react-hot-toast";
-import { Calendar, Users, CheckCircle, ArrowLeft, Phone, Mail, User, Home, MapPin, DollarSign } from "lucide-react";
+import { Calendar, Users, CheckCircle, ArrowLeft, Phone, Mail, User, Home, MapPin, DollarSign, AlertTriangle } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { BRAND_CONFIG } from "~/config/branding";
 
@@ -102,8 +102,29 @@ function RegisterPage() {
   useEffect(() => {
     if (session && sessionEventQuery.data) {
       reset({
-        ...registrationSchema.parse({}), // Get default empty values
         eventId: sessionEventQuery.data.id,
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        isHomeless: false,
+        totalIndividuals: 1,
+        address: "",
+        apartmentSuite: "",
+        cityTown: "",
+        stateProvince: "",
+        zipPostalCode: "",
+        country: "",
+        county: "",
+        alternatePickupPerson: "",
+        phoneNumber: "",
+        email: "",
+        incomeEligibility: false,
+        snap: false,
+        tanf: false,
+        ssi: false,
+        medicaid: false,
+        incomeSalary: undefined,
+        digitalSignature: "",
       });
     }
   }, [session, sessionEventQuery.data, reset]);
@@ -126,8 +147,9 @@ function RegisterPage() {
   }, [eventsQuery.data, session, sessionEventQuery.data]);
 
   const selectedEventId = watch("eventId");
+  const isHomeless = watch("isHomeless");
 
-  // ÚNICA DECLARACIÓN DE selectedEvent para evitar el error de duplicidad
+  // DETERMINACIÓN ÚNICA DEL EVENTO SELECCIONADO (Se eliminó la redeclaración anterior)
   const selectedEvent = useMemo(() => {
     if (session && sessionEventQuery.data) {
       return sessionEventQuery.data;
@@ -135,12 +157,11 @@ function RegisterPage() {
     return eventsQuery.data?.find((e) => e.id === selectedEventId);
   }, [session, sessionEventQuery.data, eventsQuery.data, selectedEventId]);
 
-  // Control de disponibilidad de bolsas: Si el evento existe, calculamos si está lleno
+  // CONTROL DE DISPONIBILIDAD
   const isEventFull = useMemo(() => {
     if (!selectedEvent) return false;
-    // Usamos remainingBags si existe, de lo contrario calculamos manualmente
-    const remaining = selectedEvent.remainingBags ?? (selectedEvent.availableBags - selectedEvent.registeredCount);
-    return remaining <= 0;
+    // Si availableBags - registeredCount es 0 o menos, está lleno
+    return (selectedEvent.availableBags - selectedEvent.registeredCount) <= 0;
   }, [selectedEvent]);
 
   const registerMutation = useMutation(
@@ -159,6 +180,10 @@ function RegisterPage() {
   );
 
   const onSubmit = (data: RegistrationFormData) => {
+    if (isEventFull) {
+        toast.error("Event is full / Evento sin cupo");
+        return;
+    }
     registerMutation.mutate(data);
   };
 
@@ -174,15 +199,18 @@ function RegisterPage() {
             </div>
             <h1 className="mb-4 text-center text-3xl font-bold text-gray-900">
               Registration Successful! /
-              <span className="text-blue-600"> ¡Registro completado con éxito!</span>
+              <span className="text-blue-600">¡Registro completado con éxito!</span>
+
             </h1>
             <p className="mb-6 text-center text-gray-600">
               Thank you for registering. You will receive an SMS confirmation shortly.<br />
-              <span className="text-blue-600">Gracias por registrarte. En breve recibirás un SMS de confirmación.</span>
+              {" "}
+            <span className="text-blue-600">Gracias por registrarte. En breve recibirás un SMS de confirmación.</span>
             </p>
             <div className="mb-8 rounded-xl bg-blue-50 p-6">
               <p className="mb-2 text-center text-sm font-medium text-gray-700">
-                Your Order Number <span className="text-blue-600">(Sú número de orden)</span>
+                Your Order Number {" "}
+              <span className="text-blue-600">(Sú número de orden)</span>
               </p>
               <p className="text-center text-3xl font-bold text-blue-600">
                 {orderNumber}
@@ -191,8 +219,9 @@ function RegisterPage() {
               {qrCodeUrl && (
                 <div className="mt-6">
                   <p className="mb-3 text-center text-sm font-medium text-gray-700">
-                    Scan this QR code to view your registration<br />
-                    <span className="text-blue-600">Escanea este código QR para ver tu inscripción</span>
+                    Scan this QR code to view your registration<br />{" "}
+                    <span className="text-blue-600">
+                    Escanea este código QR para ver tu inscripción</span>
                   </p>
                   <div className="flex justify-center">
                     <img
@@ -201,12 +230,18 @@ function RegisterPage() {
                       className="rounded-lg border-4 border-white shadow-lg"
                     />
                   </div>
+                  <p className="mt-3 text-center text-xs text-gray-600">
+                    Save this QR code to quickly access your registration details<br />{" "}
+                    <span className="text-blue-600">
+                    Guarda este código QR para acceder rápidamente a los datos de tu inscripción</span>
+                  </p>
                 </div>
               )}
 
               <p className="mt-4 text-center text-sm text-gray-600">
-                Please save this number and present it when picking up your food bag.<br />
-                <span className="text-blue-600">Guarda este número y preséntalo cuando vayas a recoger tu bolsa de comida.</span>
+                Please save this number and present it when picking up your food bag.<br />{" "}
+                <span className="text-blue-600">
+                Guarda este número y preséntalo cuando vayas a recoger tu bolsa de comida.</span>
               </p>
             </div>
             <div className="space-y-3">
@@ -225,6 +260,7 @@ function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="mx-auto max-w-4xl px-4 py-4">
           <Link
@@ -243,127 +279,887 @@ function RegisterPage() {
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="mx-auto max-w-4xl p-4 py-8">
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">FEEDING TAMPA BAY</h1>
-          <h2 className="mb-2 text-2xl font-bold text-gray-900">THE EMERGENCY FOOD ASSISTANCE PROGRAM (TEFAP)</h2>
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">
+            FEEDING TAMPA BAY
+          </h1>
+          <h2 className="mb-2 text-2xl font-bold text-gray-900">
+            THE EMERGENCY FOOD ASSISTANCE PROGRAM (TEFAP)
+          </h2>
+          <h3 className="mb-2 text-xl font-semibold text-gray-900">
+            CERTIFICATION OF ELIGIBILITY TO TAKE FOOD HOME
+          </h3>
+          <p className="text-sm text-gray-600">7 CFR 251</p>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
+          {/* Registration Form */}
           <div className="lg:col-span-2">
             <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+                {/* MENSAJE DE EVENTO LLENO */}
+                {isEventFull && (
+                  <div className="rounded-xl border-2 border-red-300 bg-red-50 p-4 animate-pulse">
+                    <div className="flex items-center space-x-3">
+                      <AlertTriangle className="h-6 w-6 text-red-600" />
+                      <div>
+                        <p className="text-sm font-bold text-red-800">
+                          EVENT FULL / CUPO LLENO
+                        </p>
+                        <p className="text-xs text-red-700">
+                          No food bags available. Please stay tuned for the next registration.
+                        </p>
+                        <p className="text-xs text-red-700 font-semibold">
+                          No hay disponibilidad de bolsas. Esté pendiente del próximo registro.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Event Selection */}
                 <div>
-                  <label htmlFor="eventId" className="mb-2 block text-sm font-medium text-gray-700">
-                    Select Event <span className="text-red-500">*</span> <span className="text-blue-600">(Seleccionar Evento)</span>
+                  <label
+                    htmlFor="eventId"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Select Event <span className="text-red-500">*</span>
+                    <span className="text-blue-600">(Seleccionar Evento)</span><span className="text-red-500">*</span>
                   </label>
-                  {eventsQuery.isLoading ? (
-                    <div className="rounded-lg border border-gray-300 p-4 text-center text-gray-500">Loading...</div>
-                  ) : availableEvents.length > 0 ? (
+                  {eventsQuery.isLoading || (session && sessionEventQuery.isLoading) ? (
+                    <div className="rounded-lg border border-gray-300 p-4 text-center text-gray-500">
+                      Loading events...
+                    </div>
+                  ) : availableEvents && availableEvents.length > 0 ? (
                     <select
                       id="eventId"
                       {...register("eventId", { valueAsNumber: true })}
                       className="block w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={!!session}
+                      disabled={!!session || isEventFull}
                     >
                       <option value={0}>Choose an event...</option>
-                      {availableEvents.map((event) => {
-                         const remaining = event.remainingBags ?? (event.availableBags - event.registeredCount);
-                         return (
-                          <option key={event.id} value={event.id}>
-                            {event.name} - {remaining > 0 ? `${remaining} bags available` : 'FULL / AGOTADO'}
-                          </option>
-                        );
-                      })}
+                      {availableEvents.map((event) => (
+                        <option key={event.id} value={event.id}>
+                          {event.name} - {event.availableBags - event.registeredCount} bags available
+                        </option>
+                      ))}
                     </select>
                   ) : (
                     <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-center text-yellow-800">
-                      No active events available.
+                      No active events available at this time. Please check back later.<br />{" "}
+                      <span className="text-blue-600">
+                      No hay eventos activos disponibles en este momento. Vuelve a consultar más tarde.</span>
                     </div>
                   )}
-                  {errors.eventId && <p className="mt-1 text-sm text-red-600">{errors.eventId.message}</p>}
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">First Name *</label>
-                      <input type="text" {...register("firstName")} className="block w-full rounded-lg border border-gray-300 py-3 px-3" />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">Last Name *</label>
-                      <input type="text" {...register("lastName")} className="block w-full rounded-lg border border-gray-300 py-3 px-3" />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">Phone Number *</label>
-                    <input type="tel" {...register("phoneNumber")} className="block w-full rounded-lg border border-gray-300 py-3 px-3" />
-                </div>
-
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">Digital Signature *</label>
-                    <input type="text" {...register("digitalSignature")} className="block w-full rounded-lg border border-gray-300 py-3 px-3 italic" placeholder="Type full name" />
-                </div>
-
-                {/* MENSAJE DE ADVERTENCIA DE CUPO LLENO (Implementado) */}
-                {isEventFull && (
-                  <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-center animate-pulse">
-                    <p className="text-sm font-bold text-red-800">
-                      We're sorry, but meal bags are not available for this event.
+                  {errors.eventId && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.eventId.message}
                     </p>
-                    <p className="text-xs text-red-700 mt-1 font-semibold">
-                      Lo sentimos, no hay disponibilidad de bolsas de comida para este evento. Por favor, esté pendiente del próximo registro.
+                  )}
+                </div>
+
+                {/* TEFAP Information and Income Guidelines */}
+                <div className="space-y-6 rounded-lg bg-blue-50 p-6">
+                  <p className="text-sm text-gray-700">
+                    If your household income is at or below the income listed for the number of people in your household, you are eligible to receive food.<br />{" "}
+                    <span className="text-blue-600">
+                    Si los ingresos de su hogar son iguales o inferiores a los indicados para el número de personas que lo componen, tiene derecho a recibir ayuda alimentaria.</span>
+                  </p>
+
+                  <div>
+                    <h4 className="mb-3 text-center font-bold text-gray-900">
+                      TEFAP Income Eligibility Guidelines - 2025
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-300 bg-white text-sm">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Household Size</th>
+                            <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Annual Income</th>
+                            <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Monthly Income</th>
+                            <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Twice per Month</th>
+                            <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Every two Weeks</th>
+                            <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Weekly Income</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">1</td>
+                            <td className="border border-gray-300 px-3 py-2">$46,950</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,913</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,956</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,806</td>
+                            <td className="border border-gray-300 px-3 py-2">$903</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">2</td>
+                            <td className="border border-gray-300 px-3 py-2">$63,450</td>
+                            <td className="border border-gray-300 px-3 py-2">$5,288</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,644</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,440</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,220</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">3</td>
+                            <td className="border border-gray-300 px-3 py-2">$79,950</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,663</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,331</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,075</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,538</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">4</td>
+                            <td className="border border-gray-300 px-3 py-2">$96,450</td>
+                            <td className="border border-gray-300 px-3 py-2">$8,038</td>
+                            <td className="border border-gray-300 px-3 py-2">$4,019</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,710</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,855</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">5</td>
+                            <td className="border border-gray-300 px-3 py-2">$112,950</td>
+                            <td className="border border-gray-300 px-3 py-2">$9,413</td>
+                            <td className="border border-gray-300 px-3 py-2">$4,706</td>
+                            <td className="border border-gray-300 px-3 py-2">$4,344</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,172</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">6</td>
+                            <td className="border border-gray-300 px-3 py-2">$129,450</td>
+                            <td className="border border-gray-300 px-3 py-2">$10,788</td>
+                            <td className="border border-gray-300 px-3 py-2">$5,394</td>
+                            <td className="border border-gray-300 px-3 py-2">$4,979</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,489</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">7</td>
+                            <td className="border border-gray-300 px-3 py-2">$145,950</td>
+                            <td className="border border-gray-300 px-3 py-2">$12,163</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,081</td>
+                            <td className="border border-gray-300 px-3 py-2">$5,613</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,807</td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-300 px-3 py-2">8</td>
+                            <td className="border border-gray-300 px-3 py-2">$162,450</td>
+                            <td className="border border-gray-300 px-3 py-2">$13,538</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,769</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,248</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,124</td>
+                          </tr>
+                          <tr className="bg-gray-50">
+                            <td className="border border-gray-300 px-3 py-2 font-semibold">For each additional family member add:</td>
+                            <td className="border border-gray-300 px-3 py-2">$16,500</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,375</td>
+                            <td className="border border-gray-300 px-3 py-2">$688</td>
+                            <td className="border border-gray-300 px-3 py-2">$635</td>
+                            <td className="border border-gray-300 px-3 py-2">$317</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personal Information Section - TEFAP Format */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Applicant Information {" "}
+                    <span className="text-blue-600">(Datos del Solicitante)</span>
+                  </h3>
+
+                  {/* Name - Full name on one line */}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                      <label
+                        htmlFor="firstName"
+                        className="mb-2 block text-sm font-medium text-gray-700"
+                      >
+                        First Name <span className="text-blue-600"> (Primer Nombre)</span> <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="firstName"
+                        type="text"
+                        {...register("firstName")}
+                        className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="First name"
+                      />
+                      {errors.firstName && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.firstName.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="middleName"
+                        className="mb-2 block text-sm font-medium text-gray-700"
+                      >
+                        Middle Name {" "}
+                        <span className="text-blue-600">(Segundo Nombre)</span>
+                      </label>
+                      <input
+                        id="middleName"
+                        type="text"
+                        {...register("middleName")}
+                        className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Middle name"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="mb-2 block text-sm font-medium text-gray-700"
+                      >
+                        Last Name <span className="text-blue-600">(Apellidos) </span><span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="lastName"
+                        type="text"
+                        {...register("lastName")}
+                        className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Last name"
+                      />
+                      {errors.lastName && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.lastName.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Number of People and County on same row */}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="totalIndividuals"
+                        className="mb-2 block text-sm font-medium text-gray-700"
+                      >
+                        Number of People in Household <span className="text-blue-600">(# personas en el hogar)</span> <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="totalIndividuals"
+                        type="number"
+                        min="1"
+                        {...register("totalIndividuals", { valueAsNumber: true })}
+                        className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Number of individuals"
+                      />
+                      {errors.totalIndividuals && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.totalIndividuals.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="county"
+                        className="mb-2 block text-sm font-medium text-gray-700"
+                      >
+                        County <span className="text-blue-600">(Condado)</span>
+                      </label>
+                      <input
+                        id="county"
+                        type="text"
+                        {...register("county")}
+                        className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="County"
+                      />
+                      {errors.county && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.county.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address Information Section */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Address Information <span className="text-blue-600">(Datos de Contacto)</span>
+                  </h3>
+
+                  {/* Homeless Checkbox */}
+                  <div className="flex items-start">
+                    <div className="flex h-5 items-center">
+                      <input
+                        id="isHomeless"
+                        type="checkbox"
+                        {...register("isHomeless")}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="ml-3">
+                      <label htmlFor="isHomeless" className="text-sm font-medium text-gray-700">
+                        Homeless (No residence)
+                      </label>
+                      <p className="text-xs text-gray-500">
+                        Check this box if you do not have a permanent address <br />
+                        <span className="text-blue-600">(Marca esta casilla si no tienes una dirección fija)</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Conditional Address Fields - Only show if NOT homeless */}
+                  {!isHomeless && (
+                    <div className="space-y-4">
+                      {/* Street Address */}
+                      <div>
+                        <label
+                          htmlFor="address"
+                          className="mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Street Address <span className="text-blue-600">(Dirección)</span>
+                        </label>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <Home className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <input
+                            id="address"
+                            type="text"
+                            {...register("address")}
+                            className="block w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="123 Main Street"
+                          />
+                        </div>
+                        {errors.address && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.address.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Apartment/Suite */}
+                      <div>
+                        <label
+                          htmlFor="apartmentSuite"
+                          className="mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Apartment/Suite <span className="text-blue-600">(Apartamento) </span><span className="text-gray-400">(Optional/Opcional)</span>
+                        </label>
+                        <input
+                          id="apartmentSuite"
+                          type="text"
+                          {...register("apartmentSuite")}
+                          className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Apt 4B"
+                        />
+                        {errors.apartmentSuite && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.apartmentSuite.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* City/Town and State/Province */}
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                          <label
+                            htmlFor="cityTown"
+                            className="mb-2 block text-sm font-medium text-gray-700"
+                          >
+                            City/Town <span className="text-blue-600">(Ciudad)</span>
+                          </label>
+                          <input
+                            id="cityTown"
+                            type="text"
+                            {...register("cityTown")}
+                            className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Tampa"
+                          />
+                          {errors.cityTown && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {errors.cityTown.message}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="stateProvince"
+                            className="mb-2 block text-sm font-medium text-gray-700"
+                          >
+                            State/Province <span className="text-blue-600">(Estado)</span>
+                          </label>
+                          <input
+                            id="stateProvince"
+                            type="text"
+                            {...register("stateProvince")}
+                            className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="FL"
+                          />
+                          {errors.stateProvince && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {errors.stateProvince.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Country */}
+                      <div>
+                        <label
+                          htmlFor="country"
+                          className="mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Country <span className="text-blue-600">(País)</span>
+                        </label>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <MapPin className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <input
+                            id="country"
+                            type="text"
+                            {...register("country")}
+                            className="block w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="United States"
+                          />
+                        </div>
+                        {errors.country && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.country.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Zip Code - Always visible */}
+                  <div>
+                    <label
+                      htmlFor="zipPostalCode"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Zip/Postal Code <span className="text-blue-600">(Código Postal)</span>
+                    </label>
+                    <input
+                      id="zipPostalCode"
+                      type="text"
+                      {...register("zipPostalCode")}
+                      className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="33602"
+                    />
+                    {errors.zipPostalCode && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.zipPostalCode.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact Information Section */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Contact Information <span className="text-blue-600">(Información de Contacto)</span>
+                  </h3>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label
+                      htmlFor="phoneNumber"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Phone Number (Número Teléfono)<span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Phone className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="phoneNumber"
+                        type="tel"
+                        {...register("phoneNumber")}
+                        className="block w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
+                    {errors.phoneNumber && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.phoneNumber.message}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      You'll receive an SMS confirmation at this number<br />
+                     <span className="text-blue-600"> Recibirás un SMS de confirmación en este número</span>
                     </p>
                   </div>
-                )}
+
+                  {/* Email (Optional) */}
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Email Address <span className="text-blue-600">(Correo Electrónico)</span> <span className="text-gray-400">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="email"
+                        type="email"
+                        {...register("email")}
+                        className="block w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.email.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Eligibility Information Section - TEFAP Format */}
+                <div className="space-y-6">
+                  <div>
+                    <p className="mb-4 text-sm text-gray-700">
+                      You are eligible to receive food from TEFAP if your household meets the income guidelines above or participates in any of the following programs. Please place a checkmark in the space next to the category that applies.<br />
+                      <span className="text-blue-600">Tiene derecho a recibir alimentos del TEFAP si su hogar cumple los requisitos de ingresos indicados anteriormente o participa en alguno de los siguientes programas. Marque con una cruz la casilla correspondiente a la categoría que le corresponda.</span>
+
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border border-gray-300 bg-gray-50 p-4">
+                    {/* Income Eligibility */}
+                    <div className="flex items-start">
+                      <div className="flex h-5 items-center">
+                        <input
+                          id="incomeEligibility"
+                          type="checkbox"
+                          {...register("incomeEligibility")}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="ml-3">
+                        <label htmlFor="incomeEligibility" className="text-sm font-medium text-gray-700">
+                          Income eligibility <span className="text-blue-600">(Elegibilidad por Ingresos)</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* SNAP */}
+                    <div className="flex items-start">
+                      <div className="flex h-5 items-center">
+                        <input
+                          id="snap"
+                          type="checkbox"
+                          {...register("snap")}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="ml-3">
+                        <label htmlFor="snap" className="text-sm font-medium text-gray-700">
+                          Supplemental Nutrition Assistance Program (SNAP) (aka Food Stamps)
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* TANF */}
+                    <div className="flex items-start">
+                      <div className="flex h-5 items-center">
+                        <input
+                          id="tanf"
+                          type="checkbox"
+                          {...register("tanf")}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="ml-3">
+                        <label htmlFor="tanf" className="text-sm font-medium text-gray-700">
+                          Temporary Assistance to Needy Families (TANF)
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* SSI */}
+                    <div className="flex items-start">
+                      <div className="flex h-5 items-center">
+                        <input
+                          id="ssi"
+                          type="checkbox"
+                          {...register("ssi")}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="ml-3">
+                        <label htmlFor="ssi" className="text-sm font-medium text-gray-700">
+                          Supplemental Security Income (SSI)
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Medicaid */}
+                    <div className="flex items-start">
+                      <div className="flex h-5 items-center">
+                        <input
+                          id="medicaid"
+                          type="checkbox"
+                          {...register("medicaid")}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="ml-3">
+                        <label htmlFor="medicaid" className="text-sm font-medium text-gray-700">
+                          Medicaid
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Income Salary Field */}
+                  <div>
+                    <label
+                      htmlFor="incomeSalary"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Annual Income/Salary <span className="text-blue-600">(Ingresos anuales/Salario)</span><span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <DollarSign className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="incomeSalary"
+                        type="number"
+                        min="0"
+                        step="1"
+                        {...register("incomeSalary", { valueAsNumber: true })}
+                        className="block w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter annual income"
+                      />
+                    </div>
+                    {errors.incomeSalary && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.incomeSalary.message}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Enter your total annual household income<br />
+                     <span className="text-blue-600">
+                     Introduce los ingresos anuales totales de tu hogar</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Alternate Pickup Person */}
+                <div>
+                  <label
+                    htmlFor="alternatePickupPerson"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Alternate Pick-up Person <span className="text-blue-600">(Persona alternativa para recoger la comida)</span> <span className="text-gray-400">(Optional)</span>
+                  </label>
+                  <input
+                    id="alternatePickupPerson"
+                    type="text"
+                    {...register("alternatePickupPerson")}
+                    className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Name of person authorized to pick up"
+                  />
+                  {errors.alternatePickupPerson && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.alternatePickupPerson.message}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    If someone else will be picking up on your behalf<br />
+                    <span className="text-blue-600">Si otra persona va a recogerlo en tu nombre</span>
+                  </p>
+                </div>
+
+                {/* Certification Statement */}
+                <div className="space-y-6 rounded-lg border-2 border-gray-300 bg-yellow-50 p-6">
+                  <div>
+                    <p className="mb-3 text-sm font-semibold text-gray-900">
+                      The Local Distributing Agency staff must check this box, after the applicant has read the below certification statement:
+                    </p>
+                    <div className="rounded-lg border border-gray-300 bg-white p-4">
+                      <p className="mb-4 text-sm text-gray-700">
+                        I certify, by self attesting, that my yearly household gross income is at or below the income listed on this form for households with the same number of people OR that I participate in the program(s) that I have checked on this form. I also certify that as of today, I reside in the State of Florida. This certification is being submitted in connection with the receipt of Federal assistance. I understand that making a false certification may result in having to pay the State agency for the value of the food improperly issued to me and may subject me to civil or criminal prosecution under State and Federal law.<br />
+                        <span className="text-blue-600">Certifico, mediante declaración jurada, que el ingreso bruto anual de mi hogar es igual o inferior al ingreso indicado en este formulario para hogares con el mismo número de personas, O bien, que participo en el(los) programa(s) que he marcado en este formulario. Asimismo, certifico que, a la fecha de hoy, resido en el Estado de Florida. Esta certificación se presenta en relación con la recepción de asistencia federal. Entiendo que realizar una certificación falsa puede resultar en la obligación de reembolsar a la agencia estatal el valor de los alimentos que se me hayan emitido indebidamente, y puede exponerme a procesos civiles o penales conforme a las leyes estatales y federales.</span>
+
+                      </p>
+                      <p className="mb-4 text-sm text-gray-700">
+                        <strong>OPTIONAL:</strong> I authorize <span className="inline-block w-48 border-b border-gray-400">{watch("alternatePickupPerson") || ""}</span> to pick up USDA foods on my behalf.
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Any changes in the household's circumstances must be reported to the distributing agency immediately.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Digital Signature */}
+                  <div>
+                    <label
+                      htmlFor="digitalSignature"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Digital Signature (Type your full name)<br />
+                      Firma digital <span className="text-blue-600">(Escriba su nombre completo)</span> <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="digitalSignature"
+                      type="text"
+                      {...register("digitalSignature")}
+                      className="block w-full rounded-lg border border-gray-300 bg-white py-3 px-3 font-serif text-lg italic focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Type your full name here"
+                    />
+                    {errors.digitalSignature && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.digitalSignature.message}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      By typing your name, you are digitally signing this certification<br />
+                      <span className="text-blue-600">Al escribir tu nombre, estás firmando digitalmente esta certificación</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* USDA Non-Discrimination Statement */}
+                <div className="rounded-lg border border-gray-300 bg-gray-50 p-6">
+                  <p className="mb-4 text-xs text-gray-600">
+                    In accordance with federal civil rights law and U.S. Department of Agriculture (USDA) civil rights regulations and policies, this institution is prohibited from discriminating on the basis of race, color, national origin, sex, disability, age, or reprisal or retaliation for prior civil rights activity.
+                  </p>
+                  <p className="mb-4 text-xs text-gray-600">
+                    Program information may be made available in languages other than English. Persons with disabilities who require alternative means of communication to obtain program information (e.g., Braille, large print, audiotape, American Sign Language), should contact the responsible state or local agency that administers the program or USDA's TARGET Center at (202) 720-2600 (voice and TTY) or contact USDA through the Federal Relay Service at (800) 877-8339.
+                  </p>
+                  <p className="mb-4 text-xs text-gray-600">
+                    To file a program discrimination complaint, a Complainant should complete a Form AD-3027, USDA Program Discrimination Complaint Form, which can be obtained online at: https://www.usda.gov/sites/default/files/documents/USDA-OASCR%20P-Complaint-Form-0508-0002-508-11-28-17Fax2Mail.pdf, from any USDA office, by calling (866) 632-9992, or by writing a letter addressed to USDA. The letter must contain the complainant's name, address, telephone number, and a written description of the alleged discriminatory action in sufficient detail to inform the Assistant Secretary for Civil Rights (ASCR) about the nature and date of an alleged civil rights violation. The completed AD-3027 form or letter must be submitted to USDA by:
+                  </p>
+                  <ol className="mb-4 ml-6 list-decimal text-xs text-gray-600">
+                    <li>mail: U.S. Department of Agriculture Office of the Assistant Secretary for Civil Rights 1400 Independence Avenue, SW Washington, D.C. 20250-9410; or</li>
+                    <li>fax: (833) 256-1665 or (202) 690-7442; or</li>
+                    <li>email: program.intake@usda.gov</li>
+                  </ol>
+                  <p className="text-xs font-semibold text-gray-700">
+                    This institution is an equal opportunity provider.
+                  </p>
+                </div>
 
                 <button
                   type="submit"
                   disabled={
                     registerMutation.isPending ||
-                    isEventFull || // Deshabilita el botón si no hay disponibilidad
-                    (!session && availableEvents.length === 0) ||
-                    selectedEventId === 0
+                    isEventFull ||
+                    (!session && (!availableEvents || availableEvents.length === 0))
                   }
                   className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
                 >
                   {registerMutation.isPending
                     ? "Registering..."
                     : isEventFull
-                    ? "No Availability (Cupo Lleno)"
-                    : "Complete Registration"}
+                      ? "No Availability / No Hay Disponibilidad"
+                      : "Complete Registration / Completar Registro"}
                 </button>
               </form>
             </div>
           </div>
 
-          {/* Sidebar */}
+          {/* Event Info Sidebar */}
           <div className="space-y-6">
             {selectedEvent && (
-              <div className="rounded-2xl bg-white p-6 shadow-lg">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">Event Details</h3>
-                <div className="space-y-4 text-sm">
-                  <p><strong>{selectedEvent.name}</strong></p>
+              <div className={`rounded-2xl bg-white p-6 shadow-lg border-2 ${isEventFull ? 'border-red-300' : 'border-transparent'}`}>
+                <h3 className="mb-4 text-lg font-bold text-gray-900">
+                  Event Details
+                </h3>
+                <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between mb-1">
-                      <span>Availability:</span>
-                      <span className={`font-bold ${isEventFull ? 'text-red-600' : 'text-gray-900'}`}>
-                        {selectedEvent.registeredCount} / {selectedEvent.availableBags}
-                      </span>
+                    <p className="text-sm font-medium text-gray-500">Event Name</p>
+                    <p className="mt-1 font-semibold text-gray-900">{selectedEvent.name}</p>
+                  </div>
+                  {selectedEvent.description && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Description</p>
+                      <p className="mt-1 text-gray-700">{selectedEvent.description}</p>
                     </div>
-                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                       <div
-                        className={`h-full ${isEventFull ? 'bg-red-500' : 'bg-blue-600'}`}
-                        style={{ width: `${Math.min((selectedEvent.registeredCount / selectedEvent.availableBags) * 100, 100)}%` }}
-                       />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Availability</p>
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Registered</span>
+                        <span className={`font-semibold ${isEventFull ? 'text-red-600' : 'text-gray-900'}`}>
+                            {selectedEvent.registeredCount} / {selectedEvent.availableBags}
+                        </span>
+                      </div>
+                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                        <div
+                          className={`h-full transition-all ${isEventFull ? 'bg-red-500' : 'bg-blue-600'}`}
+                          style={{
+                            width: `${Math.min((selectedEvent.registeredCount / selectedEvent.availableBags) * 100, 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className={`mt-1 text-sm font-medium ${isEventFull ? 'text-red-600' : 'text-green-600'}`}>
+                        {isEventFull ? "0 bags remaining" : `${selectedEvent.availableBags - selectedEvent.registeredCount} bags remaining`}
+                      </p>
                     </div>
-                    <p className={`mt-2 font-bold ${isEventFull ? 'text-red-600' : 'text-green-600'}`}>
-                      {Math.max(0, selectedEvent.availableBags - selectedEvent.registeredCount)} bags remaining
-                    </p>
                   </div>
                 </div>
               </div>
             )}
+
+            <div className="rounded-2xl bg-blue-50 p-6">
+              <h3 className="mb-3 flex items-center space-x-2 font-bold text-gray-900">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <span>What to Expect</span>
+              </h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>SMS confirmation with order number</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>One registration per 14 days</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Present order number at pickup</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Free nutritious food packages</span>
+                </li>
+              </ul>
+            </div><br />
+            <div className="rounded-2xl bg-blue-50 p-6">
+              <h3 className="mb-3 flex items-center space-x-2 font-bold text-gray-900">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <span>Qué esperar</span>
+              </h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Confirmación por SMS con número de pedido</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Una inscripción cada 14 días</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Presente el número de pedido al recogerlo.</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="mt-0.5 text-blue-600">•</span>
+                  <span>Paquetes de alimentos nutritivos gratuitos</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
