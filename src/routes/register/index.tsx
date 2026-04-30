@@ -953,32 +953,6 @@ function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Alternate Pickup Person */}
-                <div>
-                  <label
-                    htmlFor="alternatePickupPerson"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Alternate Pick-up Person <span className="text-blue-600">(Persona alternativa para recoger la comida)</span> <span className="text-gray-400">(Optional)</span>
-                  </label>
-                  <input
-                    id="alternatePickupPerson"
-                    type="text"
-                    {...register("alternatePickupPerson")}
-                    className="block w-full rounded-lg border border-gray-300 py-3 px-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Name of person authorized to pick up"
-                  />
-                  {errors.alternatePickupPerson && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.alternatePickupPerson.message}
-                    </p>
-                  )}
-                  <p className="mt-1 text-xs text-gray-500">
-                    If someone else will be picking up on your behalf<br />
-                    <span className="text-blue-600">Si otra persona va a recogerlo en tu nombre</span>
-                  </p>
-                </div>
-
                 {/* Certification Statement */}
                 <div className="space-y-6 rounded-lg border-2 border-gray-300 bg-yellow-50 p-6">
                   <div>
@@ -992,8 +966,20 @@ function RegisterPage() {
 
                       </p>
                       <p className="mb-4 text-sm text-gray-700">
-                        <strong>OPTIONAL:</strong> I authorize <span className="inline-block w-48 border-b border-gray-400">{watch("alternatePickupPerson") || ""}</span> to pick up USDA foods on my behalf.
+                        <strong>OPTIONAL:</strong> I authorize{" "}
+                        <input
+                          type="text"
+                          {...register("alternatePickupPerson")}
+                          className="inline-block w-48 border-b border-gray-400 focus:border-blue-500 focus:outline-none px-1"
+                          placeholder="Name of person authorized to pick up"
+                        />
+                        {" "}to pick up USDA foods on my behalf.
                       </p>
+                      {errors.alternatePickupPerson && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.alternatePickupPerson.message}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-700">
                         Any changes in the household's circumstances must be reported to the distributing agency immediately.
                       </p>

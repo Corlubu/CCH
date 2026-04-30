@@ -174,7 +174,6 @@ function StaffDashboard() {
   });
 
   const isHomeless = watch("isHomeless");
-  const alternatePickupPerson = watch("alternatePickupPerson");
 
   const registerMutation = useMutation(
     trpc.registerCitizen.mutationOptions({
@@ -1297,23 +1296,6 @@ function StaffDashboard() {
                 </div>
               </div>
 
-              {/* Alternate Pickup Person */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Alternate Pick-up Person{" "}
-                  <span className="text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  {...register("alternatePickupPerson")}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Name of person authorized to pick up"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  If someone else will be picking up on their behalf
-                </p>
-              </div>
-
               {/* Certification Statement */}
               <div className="space-y-4 rounded-lg border-2 border-gray-300 bg-yellow-50 p-4">
                 <div>
@@ -1338,11 +1320,19 @@ function StaffDashboard() {
                     </p>
                     <p className="mb-4 text-sm text-gray-700">
                       <strong>OPTIONAL:</strong> I authorize{" "}
-                      <span className="inline-block w-48 border-b border-gray-400">
-                        {alternatePickupPerson || ""}
-                      </span>{" "}
+                      <input
+                        type="text"
+                        {...register("alternatePickupPerson")}
+                        className="inline-block w-48 border-b border-gray-400 focus:border-blue-500 focus:outline-none px-1"
+                        placeholder="Name of person authorized to pick up"
+                      />{" "}
                       to pick up USDA foods on my behalf.
                     </p>
+                    {errors.alternatePickupPerson && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.alternatePickupPerson.message}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-700">
                       Any changes in the household's circumstances must be
                       reported to the distributing agency immediately.
