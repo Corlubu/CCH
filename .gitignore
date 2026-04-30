@@ -1,27 +1,83 @@
-node_modules
-package-lock.json
-yarn.lock
-.pnpm-store
+```gitignore
+# Dependencies
+node_modules/
 
-.DS_Store
-.cache
+# Build outputs
+dist/
+build/
+target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.ENV
+.python-version
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Environment variables
 .env
-.vercel
-.output
-.vinxi
+.env.local
+.env.*
+!.env.example
 
-/build/
-/api/
-/server/build
-/public/build
-.vinxi
-# Sentry Config File
-.env.sentry-build-plugin
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-src/generated
+# OS
+.DS_Store
+Thumbs.db
 
-app.config.timestamp_*.js
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Testing
+.nyc_output/
+.mypy_cache/
+.pytest_cache/
+.tox/
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```
