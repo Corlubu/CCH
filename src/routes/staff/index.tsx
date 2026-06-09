@@ -690,7 +690,7 @@ function StaffDashboard() {
 
                 <div>
                   <h4 className="mb-3 text-center text-sm font-bold text-gray-900">
-                    TEFAP Income Eligibility Guidelines - 2025
+                    TEFAP Income Eligibility Guidelines - 2026
                   </h4>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-300 bg-white text-xs">
@@ -722,19 +722,19 @@ function StaffDashboard() {
                             1
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $46,950
+                            $47,880
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $3,913
+                            $3,990
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $1,956
+                            $1,995
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $1,806
+                            $1,842
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $903
+                            $921
                           </td>
                         </tr>
                         <tr>
@@ -742,19 +742,19 @@ function StaffDashboard() {
                             2
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $63,450
+                            $64,920
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $5,288
+                            $5,410
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $2,644
+                            $2,705
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $2,440
+                            $2,497
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $1,220
+                            $1,248
                           </td>
                         </tr>
                         <tr>
@@ -762,19 +762,19 @@ function StaffDashboard() {
                             3
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $79,950
+                            $81,960
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $6,663
+                            $6,830
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $3,331
+                            $3,415
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $3,075
+                            $3,152
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $1,538
+                            $1,576
                           </td>
                         </tr>
                         <tr>
@@ -782,19 +782,19 @@ function StaffDashboard() {
                             4
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $96,450
+                            $99,000
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $8,038
+                            $8,250
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $4,019
+                            $4,125
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $3,710
+                            $3,808
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $1,855
+                            $1,904
                           </td>
                         </tr>
                         <tr>
@@ -802,19 +802,19 @@ function StaffDashboard() {
                             5
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $112,950
+                            $116,040
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $9,413
+                            $9,670
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $4,706
+                            $4,835
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $4,344
+                            $4,463
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $2,172
+                            $2,232
                           </td>
                         </tr>
                         <tr>
@@ -822,19 +822,19 @@ function StaffDashboard() {
                             6
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $129,450
+                            $133,080
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $10,788
+                            $11,090
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $5,394
+                            $5,545
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $4,979
+                            $5,118
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $2,489
+                            $2,559
                           </td>
                         </tr>
                         <tr>
@@ -842,19 +842,19 @@ function StaffDashboard() {
                             7
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $145,950
+                            $150,120
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $12,163
+                            $12,510
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $6,081
+                            $6,255
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $5,613
+                            $5,774
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $2,807
+                            $2,887
                           </td>
                         </tr>
                         <tr>
@@ -862,19 +862,19 @@ function StaffDashboard() {
                             8
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $162,450
+                            $167,160
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $13,538
+                            $13,930
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $6,769
+                            $6,965
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $6,248
+                            $6,429
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $3,124
+                            $3,215
                           </td>
                         </tr>
                         <tr className="bg-gray-50">
@@ -882,19 +882,19 @@ function StaffDashboard() {
                             For each additional family member add:
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $16,500
+                            $17,040
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $1,375
+                            $1,420
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $688
+                            $710
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $635
+                            $655
                           </td>
                           <td className="border border-gray-300 px-2 py-1">
-                            $317
+                            $328
                           </td>
                         </tr>
                       </tbody>

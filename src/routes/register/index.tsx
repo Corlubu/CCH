@@ -377,7 +377,7 @@ function RegisterPage() {
 
                   <div>
                     <h4 className="mb-3 text-center font-bold text-gray-900">
-                      {isSpanish ? "Pautas de Elegibilidad de Ingresos de TEFAP - 2025" : "TEFAP Income Eligibility Guidelines - 2025"}
+                      {isSpanish ? "Pautas de Elegibilidad de Ingresos de TEFAP - 2026" : "TEFAP Income Eligibility Guidelines - 2026"}
                     </h4>
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse border border-gray-300 bg-white text-sm">
@@ -394,77 +394,77 @@ function RegisterPage() {
                         <tbody>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">1</td>
-                            <td className="border border-gray-300 px-3 py-2">$46,950</td>
-                            <td className="border border-gray-300 px-3 py-2">$3,913</td>
-                            <td className="border border-gray-300 px-3 py-2">$1,956</td>
-                            <td className="border border-gray-300 px-3 py-2">$1,806</td>
-                            <td className="border border-gray-300 px-3 py-2">$903</td>
+                            <td className="border border-gray-300 px-3 py-2">$47,880</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,990</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,995</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,842</td>
+                            <td className="border border-gray-300 px-3 py-2">$921</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">2</td>
-                            <td className="border border-gray-300 px-3 py-2">$63,450</td>
-                            <td className="border border-gray-300 px-3 py-2">$5,288</td>
-                            <td className="border border-gray-300 px-3 py-2">$2,644</td>
-                            <td className="border border-gray-300 px-3 py-2">$2,440</td>
-                            <td className="border border-gray-300 px-3 py-2">$1,220</td>
+                            <td className="border border-gray-300 px-3 py-2">$64,920</td>
+                            <td className="border border-gray-300 px-3 py-2">$5,410</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,705</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,492</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,248</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">3</td>
-                            <td className="border border-gray-300 px-3 py-2">$79,950</td>
-                            <td className="border border-gray-300 px-3 py-2">$6,663</td>
-                            <td className="border border-gray-300 px-3 py-2">$3,331</td>
-                            <td className="border border-gray-300 px-3 py-2">$3,075</td>
-                            <td className="border border-gray-300 px-3 py-2">$1,538</td>
+                            <td className="border border-gray-300 px-3 py-2">$81,960</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,830</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,415</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,152</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,576</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">4</td>
-                            <td className="border border-gray-300 px-3 py-2">$96,450</td>
-                            <td className="border border-gray-300 px-3 py-2">$8,038</td>
-                            <td className="border border-gray-300 px-3 py-2">$4,019</td>
-                            <td className="border border-gray-300 px-3 py-2">$3,710</td>
-                            <td className="border border-gray-300 px-3 py-2">$1,855</td>
+                            <td className="border border-gray-300 px-3 py-2">$99,000</td>
+                            <td className="border border-gray-300 px-3 py-2">$8,250</td>
+                            <td className="border border-gray-300 px-3 py-2">$4,125</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,808</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,904</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">5</td>
-                            <td className="border border-gray-300 px-3 py-2">$112,950</td>
-                            <td className="border border-gray-300 px-3 py-2">$9,413</td>
-                            <td className="border border-gray-300 px-3 py-2">$4,706</td>
-                            <td className="border border-gray-300 px-3 py-2">$4,344</td>
-                            <td className="border border-gray-300 px-3 py-2">$2,172</td>
+                            <td className="border border-gray-300 px-3 py-2">$116,040</td>
+                            <td className="border border-gray-300 px-3 py-2">$9,670</td>
+                            <td className="border border-gray-300 px-3 py-2">$4,835</td>
+                            <td className="border border-gray-300 px-3 py-2">$4,463</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,232</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">6</td>
-                            <td className="border border-gray-300 px-3 py-2">$129,450</td>
-                            <td className="border border-gray-300 px-3 py-2">$10,788</td>
-                            <td className="border border-gray-300 px-3 py-2">$5,394</td>
-                            <td className="border border-gray-300 px-3 py-2">$4,979</td>
-                            <td className="border border-gray-300 px-3 py-2">$2,489</td>
+                            <td className="border border-gray-300 px-3 py-2">$133,080</td>
+                            <td className="border border-gray-300 px-3 py-2">$11,090</td>
+                            <td className="border border-gray-300 px-3 py-2">$5,545</td>
+                            <td className="border border-gray-300 px-3 py-2">$5,118</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,559</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">7</td>
-                            <td className="border border-gray-300 px-3 py-2">$145,950</td>
-                            <td className="border border-gray-300 px-3 py-2">$12,163</td>
-                            <td className="border border-gray-300 px-3 py-2">$6,081</td>
-                            <td className="border border-gray-300 px-3 py-2">$5,613</td>
-                            <td className="border border-gray-300 px-3 py-2">$2,807</td>
+                            <td className="border border-gray-300 px-3 py-2">$150,120</td>
+                            <td className="border border-gray-300 px-3 py-2">$12,510</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,255</td>
+                            <td className="border border-gray-300 px-3 py-2">$5,774</td>
+                            <td className="border border-gray-300 px-3 py-2">$2,887</td>
                           </tr>
                           <tr>
                             <td className="border border-gray-300 px-3 py-2">8</td>
-                            <td className="border border-gray-300 px-3 py-2">$162,450</td>
-                            <td className="border border-gray-300 px-3 py-2">$13,538</td>
-                            <td className="border border-gray-300 px-3 py-2">$6,769</td>
-                            <td className="border border-gray-300 px-3 py-2">$6,248</td>
-                            <td className="border border-gray-300 px-3 py-2">$3,124</td>
+                            <td className="border border-gray-300 px-3 py-2">$167,160</td>
+                            <td className="border border-gray-300 px-3 py-2">$13,930</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,965</td>
+                            <td className="border border-gray-300 px-3 py-2">$6,429</td>
+                            <td className="border border-gray-300 px-3 py-2">$3,215</td>
                           </tr>
                           <tr className="bg-gray-50">
                             <td className="border border-gray-300 px-3 py-2 font-semibold">
                               {isSpanish ? "Por cada miembro adicional agregue:" : "For each additional family member add:"}
                             </td>
-                            <td className="border border-gray-300 px-3 py-2">$16,500</td>
-                            <td className="border border-gray-300 px-3 py-2">$1,375</td>
-                            <td className="border border-gray-300 px-3 py-2">$688</td>
-                            <td className="border border-gray-300 px-3 py-2">$635</td>
-                            <td className="border border-gray-300 px-3 py-2">$317</td>
+                            <td className="border border-gray-300 px-3 py-2">$17,040</td>
+                            <td className="border border-gray-300 px-3 py-2">$1,420</td>
+                            <td className="border border-gray-300 px-3 py-2">$710</td>
+                            <td className="border border-gray-300 px-3 py-2">$655</td>
+                            <td className="border border-gray-300 px-3 py-2">$328</td>
                           </tr>
                         </tbody>
                       </table>
