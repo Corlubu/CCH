@@ -138,6 +138,7 @@ model Registration {
   user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   citizenProfile  CitizenProfile? @relation(fields: [citizenProfileId], references: [id], onDelete: SetNull)
 
+  @@unique([phoneNumber, eventId])
   @@index([phoneNumber])
   @@index([orderNumber])
   @@index([eventId])
