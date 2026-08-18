@@ -33,6 +33,9 @@ import {
   UserX,
   UserPlus,
   Download,
+  Megaphone,
+  Trash2,
+  Power,
 } from "lucide-react";
 import { BRAND_CONFIG } from "~/config/branding";
 
@@ -69,6 +72,17 @@ const registrationCooldownSchema = z.object({
 
 type RegistrationCooldownFormData = z.infer<typeof registrationCooldownSchema>;
 
+const announcementSchema = z.object({
+  title: z.string().optional(),
+  message: z.string().min(1, "Message is required"),
+  type: z.enum(["info", "warning", "danger", "success"]),
+  eventId: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+
+type AnnouncementFormData = z.infer<typeof announcementSchema>;
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const { user, token, clearAuth } = useAuthStore();
@@ -78,7 +92,7 @@ function AdminDashboard() {
   const [showEventForm, setShowEventForm] = useState(false);
   const [selectedEventForQR, setSelectedEventForQR] = useState<number | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"overview" | "events" | "registrations" | "users" | "citizens" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "events" | "registrations" | "users" | "citizens" | "announcements" | "settings">("overview");
   const [eventStatusFilter, setEventStatusFilter] = useState<"ACTIVE" | "INACTIVE" | "COMPLETED" | undefined>(undefined);
   const [userRoleFilter, setUserRoleFilter] = useState<"ADMIN" | "STAFF" | "CITIZEN" | undefined>(undefined);
   const [selectedEventDetails, setSelectedEventDetails] = useState<number | null>(null);
@@ -104,6 +118,8 @@ function AdminDashboard() {
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<number | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -190,6 +206,15 @@ function AdminDashboard() {
       : { enabled: false, queryKey: ["disabled"] }
   );
 
+  // Fetch all announcements
+  const announcementsQuery = useQuery(
+    token
+      ? trpc.listAnnouncements.queryOptions({
+          authToken: token,
+        })
+      : { enabled: false, queryKey: ["disabled"] }
+  );
+
   const {
     register,
     handleSubmit,
@@ -222,6 +247,23 @@ function AdminDashboard() {
   }, [cooldownSettingsQuery.data, setValueCooldown]);
 
   const cooldownEnabled = watchCooldown("registrationCooldownEnabled");
+
+  const {
+    register: registerAnnouncement,
+    handleSubmit: handleSubmitAnnouncement,
+    formState: { errors: announcementErrors },
+    reset: resetAnnouncementForm,
+  } = useForm<AnnouncementFormData>({
+    resolver: zodResolver(announcementSchema),
+    defaultValues: {
+      title: "",
+      message: "",
+      type: "warning",
+      eventId: "",
+      startDate: "",
+      endDate: "",
+    },
+  });
 
   const createEventMutation = useMutation(
     trpc.createEvent.mutationOptions({
@@ -322,6 +364,59 @@ function AdminDashboard() {
       },
       onError: (error) => {
         toast.error(error.message || "Failed to auto-complete events");
+      },
+    })
+  );
+
+  const createAnnouncementMutation = useMutation(
+    trpc.createAnnouncement.mutationOptions({
+      onSuccess: () => {
+        toast.success("Announcement created successfully!");
+        resetAnnouncementForm();
+        setShowAnnouncementForm(false);
+        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to create announcement");
+      },
+    })
+  );
+
+  const updateAnnouncementMutation = useMutation(
+    trpc.updateAnnouncement.mutationOptions({
+      onSuccess: () => {
+        toast.success("Announcement updated successfully!");
+        resetAnnouncementForm();
+        setShowAnnouncementForm(false);
+        setEditingAnnouncementId(null);
+        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to update announcement");
+      },
+    })
+  );
+
+  const deleteAnnouncementMutation = useMutation(
+    trpc.deleteAnnouncement.mutationOptions({
+      onSuccess: () => {
+        toast.success("Announcement deleted successfully!");
+        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to delete announcement");
+      },
+    })
+  );
+
+  const toggleAnnouncementMutation = useMutation(
+    trpc.toggleAnnouncement.mutationOptions({
+      onSuccess: () => {
+        toast.success("Announcement status updated!");
+        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to update announcement status");
       },
     })
   );
@@ -451,6 +546,84 @@ function AdminDashboard() {
     autoCompleteEventsMutation.mutate({
       authToken: token,
     });
+  };
+
+  const handleCreateAnnouncement = () => {
+    setEditingAnnouncementId(null);
+    resetAnnouncementForm({
+      title: "",
+      message: "",
+      type: "warning",
+      eventId: "",
+      startDate: "",
+      endDate: "",
+    });
+    setShowAnnouncementForm(true);
+  };
+
+  const handleEditAnnouncement = (announcement: {
+    id: number;
+    title: string | null;
+    message: string;
+    type: string;
+    eventId: number | null;
+    startDate: Date | null;
+    endDate: Date | null;
+  }) => {
+    setEditingAnnouncementId(announcement.id);
+    resetAnnouncementForm({
+      title: announcement.title ?? "",
+      message: announcement.message,
+      type: announcement.type as AnnouncementFormData["type"],
+      eventId: announcement.eventId ? String(announcement.eventId) : "",
+      startDate: announcement.startDate
+        ? new Date(announcement.startDate).toISOString().slice(0, 16)
+        : "",
+      endDate: announcement.endDate
+        ? new Date(announcement.endDate).toISOString().slice(0, 16)
+        : "",
+    });
+    setShowAnnouncementForm(true);
+  };
+
+  const onSubmitAnnouncement = (data: AnnouncementFormData) => {
+    if (!token) return;
+
+    const payload = {
+      title: data.title?.trim() ? data.title.trim() : undefined,
+      message: data.message,
+      type: data.type,
+      eventId: data.eventId ? Number(data.eventId) : undefined,
+      startDate: data.startDate ? new Date(data.startDate) : undefined,
+      endDate: data.endDate ? new Date(data.endDate) : undefined,
+    };
+
+    if (editingAnnouncementId) {
+      updateAnnouncementMutation.mutate({
+        authToken: token,
+        id: editingAnnouncementId,
+        ...payload,
+        eventId: payload.eventId ?? null,
+        startDate: payload.startDate ?? null,
+        endDate: payload.endDate ?? null,
+      });
+    } else {
+      createAnnouncementMutation.mutate({
+        authToken: token,
+        ...payload,
+      });
+    }
+  };
+
+  const handleDeleteAnnouncement = (id: number) => {
+    if (!token) return;
+    if (!window.confirm("Are you sure you want to delete this announcement?")) return;
+    deleteAnnouncementMutation.mutate({ authToken: token, id });
+  };
+
+  const handleToggleAnnouncement = (id: number) => {
+    if (!token) return;
+    toggleAnnouncementMutation.mutate({ authToken: token, id });
   };
 
   const handleExportCSV = async () => {
@@ -680,6 +853,19 @@ function AdminDashboard() {
               <div className="flex items-center space-x-2">
                 <Users className="h-4 w-4" />
                 <span>Citizen Profiles</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab("announcements")}
+              className={`border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+                activeTab === "announcements"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Megaphone className="h-4 w-4" />
+                <span>Announcements</span>
               </div>
             </button>
             <button
@@ -1575,6 +1761,253 @@ function AdminDashboard() {
                 </div>
               ) : (
                 <p className="text-center text-gray-500">No citizen profiles found.</p>
+              )}
+            </div>
+          </>
+        )}
+
+        {activeTab === "announcements" && (
+          <>
+            <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Signup Screen Announcements</h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Post a message on the public registration screen — e.g. to warn citizens that an
+                    event has been canceled or is unavailable.
+                  </p>
+                </div>
+                <button
+                  onClick={handleCreateAnnouncement}
+                  className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>New Announcement</span>
+                </button>
+              </div>
+
+              {showAnnouncementForm && (
+                <form
+                  onSubmit={handleSubmitAnnouncement(onSubmitAnnouncement)}
+                  className="mt-6 space-y-4 border-t pt-6"
+                >
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Title (optional)
+                      </label>
+                      <input
+                        type="text"
+                        {...registerAnnouncement("title")}
+                        className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Event Canceled"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Type <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        {...registerAnnouncement("type")}
+                        className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="danger">Danger / Canceled</option>
+                        <option value="success">Success</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Message <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      {...registerAnnouncement("message")}
+                      rows={3}
+                      className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Today's food distribution event has been canceled due to weather. Please check back for the next scheduled date."
+                    />
+                    {announcementErrors.message && (
+                      <p className="mt-1 text-sm text-red-600">{announcementErrors.message.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Related Event (optional)
+                    </label>
+                    <select
+                      {...registerAnnouncement("eventId")}
+                      className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">All events / general notice</option>
+                      {allEventsQuery.data?.map((event) => (
+                        <option key={event.id} value={event.id}>
+                          {event.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Leave as "All events" to show this message regardless of which event a citizen selects.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Show From (optional)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        {...registerAnnouncement("startDate")}
+                        className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Show Until (optional)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        {...registerAnnouncement("endDate")}
+                        className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      disabled={createAnnouncementMutation.isPending || updateAnnouncementMutation.isPending}
+                      className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {createAnnouncementMutation.isPending || updateAnnouncementMutation.isPending
+                        ? "Saving..."
+                        : editingAnnouncementId
+                          ? "Update Announcement"
+                          : "Create Announcement"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAnnouncementForm(false);
+                        setEditingAnnouncementId(null);
+                        resetAnnouncementForm();
+                      }}
+                      className="rounded-lg bg-gray-200 px-6 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Announcements List */}
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">All Announcements</h2>
+              {announcementsQuery.isLoading ? (
+                <p className="text-center text-gray-500">Loading announcements...</p>
+              ) : announcementsQuery.data && announcementsQuery.data.length > 0 ? (
+                <div className="space-y-4">
+                  {announcementsQuery.data.map((announcement) => {
+                    const typeBadgeClass: Record<string, string> = {
+                      info: "bg-blue-100 text-blue-700",
+                      warning: "bg-yellow-100 text-yellow-700",
+                      danger: "bg-red-100 text-red-700",
+                      success: "bg-green-100 text-green-700",
+                    };
+                    return (
+                      <div
+                        key={announcement.id}
+                        className="flex items-start justify-between rounded-lg border border-gray-200 p-4"
+                      >
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {announcement.title && (
+                              <h3 className="font-semibold text-gray-900">{announcement.title}</h3>
+                            )}
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                typeBadgeClass[announcement.type] ?? typeBadgeClass.info
+                              }`}
+                            >
+                              {announcement.type}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                announcement.isActive
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {announcement.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-700">{announcement.message}</p>
+                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                            <span>
+                              Event: {announcement.event?.name ?? "All events"}
+                            </span>
+                            {announcement.startDate && (
+                              <span>From: {new Date(announcement.startDate).toLocaleString()}</span>
+                            )}
+                            {announcement.endDate && (
+                              <span>Until: {new Date(announcement.endDate).toLocaleString()}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="ml-4 flex flex-shrink-0 space-x-2">
+                          <button
+                            onClick={() =>
+                              handleEditAnnouncement({
+                                id: announcement.id,
+                                title: announcement.title,
+                                message: announcement.message,
+                                type: announcement.type,
+                                eventId: announcement.eventId,
+                                startDate: announcement.startDate,
+                                endDate: announcement.endDate,
+                              })
+                            }
+                            className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                            title="Edit"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleAnnouncement(announcement.id)}
+                            disabled={toggleAnnouncementMutation.isPending}
+                            className={`rounded-lg px-2 py-1 text-xs font-semibold text-white transition-colors disabled:bg-gray-400 ${
+                              announcement.isActive
+                                ? "bg-yellow-600 hover:bg-yellow-700"
+                                : "bg-green-600 hover:bg-green-700"
+                            }`}
+                            title={announcement.isActive ? "Deactivate" : "Activate"}
+                          >
+                            <Power className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAnnouncement(announcement.id)}
+                            disabled={deleteAnnouncementMutation.isPending}
+                            className="rounded-lg bg-red-600 px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:bg-gray-400"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500">
+                  No announcements yet. Create one to notify citizens on the registration screen.
+                </p>
               )}
             </div>
           </>

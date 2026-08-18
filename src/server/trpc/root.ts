@@ -36,6 +36,14 @@ import { updateRegistrationCooldownSettings } from "~/server/trpc/procedures/upd
 import { autoCompleteExpiredEvents } from "~/server/trpc/procedures/autoCompleteExpiredEvents";
 import { getAllCitizenProfiles } from "~/server/trpc/procedures/getAllCitizenProfiles";
 import { exportCitizenProfilesToCSV } from "~/server/trpc/procedures/exportCitizenProfilesToCSV";
+import {
+  createAnnouncement,
+  updateAnnouncement,
+  deleteAnnouncement,
+  toggleAnnouncement,
+  listAnnouncements,
+  getActiveAnnouncements,
+} from "~/server/trpc/procedures/announcements";
 
 export const appRouter = createTRPCRouter({
   login,
@@ -72,6 +80,12 @@ export const appRouter = createTRPCRouter({
   autoCompleteExpiredEvents,
   getAllCitizenProfiles,
   exportCitizenProfilesToCSV,
+  createAnnouncement,
+  updateAnnouncement,
+  deleteAnnouncement,
+  toggleAnnouncement,
+  listAnnouncements,
+  getActiveAnnouncements,
 });
 
 export type AppRouter = typeof appRouter;

@@ -21,6 +21,7 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { BRAND_CONFIG } from "~/config/branding";
+import { AnnouncementBanner } from "~/components/AnnouncementBanner";
 
 export const Route = createFileRoute("/register/")({
   component: RegisterPage,
@@ -296,6 +297,8 @@ function RegisterPage() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-4xl p-4 py-8">
+        <AnnouncementBanner eventId={selectedEvent?.id} />
+
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-bold text-gray-900">
             FEEDING TAMPA BAY
