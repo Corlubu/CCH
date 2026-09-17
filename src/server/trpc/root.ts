@@ -1,7 +1,4 @@
-import {
-  createCallerFactory,
-  createTRPCRouter,
-} from "~/server/trpc/main";
+import { createCallerFactory, createTRPCRouter } from "~/server/trpc/main";
 import { login } from "~/server/trpc/procedures/login";
 import { createEvent } from "~/server/trpc/procedures/createEvent";
 import { getActiveEvents } from "~/server/trpc/procedures/getActiveEvents";
@@ -36,6 +33,7 @@ import { updateRegistrationCooldownSettings } from "~/server/trpc/procedures/upd
 import { autoCompleteExpiredEvents } from "~/server/trpc/procedures/autoCompleteExpiredEvents";
 import { getAllCitizenProfiles } from "~/server/trpc/procedures/getAllCitizenProfiles";
 import { exportCitizenProfilesToCSV } from "~/server/trpc/procedures/exportCitizenProfilesToCSV";
+import { getRegistrationsReport } from "~/server/trpc/procedures/reports";
 import {
   createAnnouncement,
   updateAnnouncement,
@@ -86,6 +84,7 @@ export const appRouter = createTRPCRouter({
   toggleAnnouncement,
   listAnnouncements,
   getActiveAnnouncements,
+  getRegistrationsReport,
 });
 
 export type AppRouter = typeof appRouter;
