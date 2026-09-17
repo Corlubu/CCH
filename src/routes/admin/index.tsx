@@ -36,6 +36,8 @@ import {
   Megaphone,
   Trash2,
   Power,
+  FileBarChart,
+  FileText,
 } from "lucide-react";
 import { BRAND_CONFIG } from "~/config/branding";
 
@@ -47,27 +49,36 @@ const eventSchema = z.object({
   name: z.string().min(1, "Event name is required"),
   description: z.string().optional(),
   availableBags: z.number().min(1, "Must have at least 1 bag available"),
-  startDatetime: z.string().min(1, "Start date is required").refine(
-    (val) => {
-      const date = new Date(val);
-      return !isNaN(date.getTime());
-    },
-    { message: "Invalid start date" }
-  ),
-  endDatetime: z.string().min(1, "End date is required").refine(
-    (val) => {
-      const date = new Date(val);
-      return !isNaN(date.getTime());
-    },
-    { message: "Invalid end date" }
-  ),
+  startDatetime: z
+    .string()
+    .min(1, "Start date is required")
+    .refine(
+      (val) => {
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+      },
+      { message: "Invalid start date" },
+    ),
+  endDatetime: z
+    .string()
+    .min(1, "End date is required")
+    .refine(
+      (val) => {
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+      },
+      { message: "Invalid end date" },
+    ),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
 
 const registrationCooldownSchema = z.object({
   registrationCooldownEnabled: z.boolean(),
-  registrationCooldownDays: z.number().min(1, "Must be at least 1 day").max(365, "Must be at most 365 days"),
+  registrationCooldownDays: z
+    .number()
+    .min(1, "Must be at least 1 day")
+    .max(365, "Must be at most 365 days"),
 });
 
 type RegistrationCooldownFormData = z.infer<typeof registrationCooldownSchema>;
@@ -88,38 +99,79 @@ function AdminDashboard() {
   const { user, token, clearAuth } = useAuthStore();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  
+
   const [showEventForm, setShowEventForm] = useState(false);
-  const [selectedEventForQR, setSelectedEventForQR] = useState<number | null>(null);
+  const [selectedEventForQR, setSelectedEventForQR] = useState<number | null>(
+    null,
+  );
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"overview" | "events" | "registrations" | "users" | "citizens" | "announcements" | "settings">("overview");
-  const [eventStatusFilter, setEventStatusFilter] = useState<"ACTIVE" | "INACTIVE" | "COMPLETED" | undefined>(undefined);
-  const [userRoleFilter, setUserRoleFilter] = useState<"ADMIN" | "STAFF" | "CITIZEN" | undefined>(undefined);
-  const [selectedEventDetails, setSelectedEventDetails] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    | "overview"
+    | "events"
+    | "registrations"
+    | "users"
+    | "citizens"
+    | "announcements"
+    | "reports"
+    | "settings"
+  >("overview");
+  const [eventStatusFilter, setEventStatusFilter] = useState<
+    "ACTIVE" | "INACTIVE" | "COMPLETED" | undefined
+  >(undefined);
+  const [userRoleFilter, setUserRoleFilter] = useState<
+    "ADMIN" | "STAFF" | "CITIZEN" | undefined
+  >(undefined);
+  const [selectedEventDetails, setSelectedEventDetails] = useState<
+    number | null
+  >(null);
   const [registrationSearchQuery, setRegistrationSearchQuery] = useState("");
   const [showCitizenModal, setShowCitizenModal] = useState(false);
-  const [citizenModalMode, setCitizenModalMode] = useState<"create" | "edit">("create");
-  const [selectedCitizen, setSelectedCitizen] = useState<{
-    id: number;
-    username: string;
-    fullName: string;
-    email: string | null;
-    phoneNumber: string | null;
-  } | undefined>(undefined);
+  const [citizenModalMode, setCitizenModalMode] = useState<"create" | "edit">(
+    "create",
+  );
+  const [selectedCitizen, setSelectedCitizen] = useState<
+    | {
+        id: number;
+        username: string;
+        fullName: string;
+        email: string | null;
+        phoneNumber: string | null;
+      }
+    | undefined
+  >(undefined);
   const [showStaffModal, setShowStaffModal] = useState(false);
-  const [staffModalMode, setStaffModalMode] = useState<"create" | "edit">("create");
-  const [selectedStaff, setSelectedStaff] = useState<{
-    id: number;
-    username: string;
-    fullName: string;
-    email: string | null;
-    phoneNumber: string | null;
-  } | undefined>(undefined);
+  const [staffModalMode, setStaffModalMode] = useState<"create" | "edit">(
+    "create",
+  );
+  const [selectedStaff, setSelectedStaff] = useState<
+    | {
+        id: number;
+        username: string;
+        fullName: string;
+        email: string | null;
+        phoneNumber: string | null;
+      }
+    | undefined
+  >(undefined);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
-  const [editingAnnouncementId, setEditingAnnouncementId] = useState<number | null>(null);
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<
+    number | null
+  >(null);
+  const [reportFilters, setReportFilters] = useState<{
+    eventId?: number;
+    phoneNumber?: string;
+    name?: string;
+  }>({});
+  const [appliedReportFilters, setAppliedReportFilters] = useState<{
+    eventId?: number;
+    phoneNumber?: string;
+    name?: string;
+  }>({});
+  const [reportPage, setReportPage] = useState(1);
+  const [isExportingReport, setIsExportingReport] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -135,7 +187,7 @@ function AdminDashboard() {
   const statsQuery = useQuery(
     token
       ? trpc.getDashboardStats.queryOptions({ authToken: token })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch all events with optional filter
@@ -145,7 +197,7 @@ function AdminDashboard() {
           authToken: token,
           status: eventStatusFilter,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch recent registrations
@@ -155,7 +207,7 @@ function AdminDashboard() {
           authToken: token,
           limit: 20,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch all users with optional filter
@@ -165,7 +217,7 @@ function AdminDashboard() {
           authToken: token,
           role: userRoleFilter,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch event details when selected
@@ -175,7 +227,7 @@ function AdminDashboard() {
           authToken: token,
           eventId: selectedEventDetails,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch search results for registrations
@@ -185,7 +237,7 @@ function AdminDashboard() {
           authToken: token,
           searchQuery: registrationSearchQuery,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch registration cooldown settings
@@ -194,7 +246,7 @@ function AdminDashboard() {
       ? trpc.getRegistrationCooldownSettings.queryOptions({
           authToken: token,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch all citizen profiles
@@ -203,7 +255,7 @@ function AdminDashboard() {
       ? trpc.getAllCitizenProfiles.queryOptions({
           authToken: token,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   // Fetch all announcements
@@ -212,7 +264,26 @@ function AdminDashboard() {
       ? trpc.listAnnouncements.queryOptions({
           authToken: token,
         })
-      : { enabled: false, queryKey: ["disabled"] }
+      : { enabled: false, queryKey: ["disabled"] },
+  );
+
+  // Fetch events for the report filter dropdown (independiente del filtro de la pestaña Events)
+  const reportEventsQuery = useQuery(
+    token
+      ? trpc.getAllEvents.queryOptions({ authToken: token })
+      : { enabled: false, queryKey: ["disabled"] },
+  );
+
+  // Fetch paginated registration report
+  const reportDataQuery = useQuery(
+    token
+      ? trpc.getRegistrationsReport.queryOptions({
+          authToken: token,
+          ...appliedReportFilters,
+          page: reportPage,
+          pageSize: 25,
+        })
+      : { enabled: false, queryKey: ["disabled"] },
   );
 
   const {
@@ -241,8 +312,14 @@ function AdminDashboard() {
   // Update form when settings are loaded
   useEffect(() => {
     if (cooldownSettingsQuery.data) {
-      setValueCooldown("registrationCooldownEnabled", cooldownSettingsQuery.data.registrationCooldownEnabled);
-      setValueCooldown("registrationCooldownDays", cooldownSettingsQuery.data.registrationCooldownDays);
+      setValueCooldown(
+        "registrationCooldownEnabled",
+        cooldownSettingsQuery.data.registrationCooldownEnabled,
+      );
+      setValueCooldown(
+        "registrationCooldownDays",
+        cooldownSettingsQuery.data.registrationCooldownDays,
+      );
     }
   }, [cooldownSettingsQuery.data, setValueCooldown]);
 
@@ -271,13 +348,17 @@ function AdminDashboard() {
         toast.success("Event created successfully!");
         reset();
         setShowEventForm(false);
-        void queryClient.invalidateQueries({ queryKey: trpc.getAllEvents.queryKey() });
-        void queryClient.invalidateQueries({ queryKey: trpc.getDashboardStats.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getAllEvents.queryKey(),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getDashboardStats.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to create event");
       },
-    })
+    }),
   );
 
   const generateQRMutation = useMutation(
@@ -289,83 +370,103 @@ function AdminDashboard() {
       onError: (error) => {
         toast.error(error.message || "Failed to generate QR code");
       },
-    })
+    }),
   );
 
   const updateEventStatusMutation = useMutation(
     trpc.updateEventStatus.mutationOptions({
       onSuccess: () => {
         toast.success("Event status updated successfully!");
-        void queryClient.invalidateQueries({ queryKey: trpc.getAllEvents.queryKey() });
-        void queryClient.invalidateQueries({ queryKey: trpc.getDashboardStats.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getAllEvents.queryKey(),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getDashboardStats.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update event status");
       },
-    })
+    }),
   );
 
   const updateCheckInMutation = useMutation(
     trpc.updateRegistrationCheckIn.mutationOptions({
       onSuccess: () => {
         toast.success("Check-in status updated!");
-        void queryClient.invalidateQueries({ queryKey: trpc.getRecentRegistrations.queryKey() });
-        void queryClient.invalidateQueries({ queryKey: trpc.getEventDetails.queryKey() });
-        void queryClient.invalidateQueries({ queryKey: trpc.getDashboardStats.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getRecentRegistrations.queryKey(),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getEventDetails.queryKey(),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getDashboardStats.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update check-in status");
       },
-    })
+    }),
   );
 
   const toggleCitizenStatusMutation = useMutation(
     trpc.toggleCitizenStatus.mutationOptions({
       onSuccess: () => {
         toast.success("Citizen status updated successfully!");
-        void queryClient.invalidateQueries({ queryKey: trpc.getAllUsers.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getAllUsers.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update citizen status");
       },
-    })
+    }),
   );
 
   const toggleStaffStatusMutation = useMutation(
     trpc.toggleStaffStatus.mutationOptions({
       onSuccess: () => {
         toast.success("Staff status updated successfully!");
-        void queryClient.invalidateQueries({ queryKey: trpc.getAllUsers.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getAllUsers.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update staff status");
       },
-    })
+    }),
   );
 
   const updateCooldownSettingsMutation = useMutation(
     trpc.updateRegistrationCooldownSettings.mutationOptions({
       onSuccess: () => {
         toast.success("Settings updated successfully!");
-        void queryClient.invalidateQueries({ queryKey: trpc.getRegistrationCooldownSettings.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getRegistrationCooldownSettings.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update settings");
       },
-    })
+    }),
   );
 
   const autoCompleteEventsMutation = useMutation(
     trpc.autoCompleteExpiredEvents.mutationOptions({
       onSuccess: (data) => {
         toast.success(data.message);
-        void queryClient.invalidateQueries({ queryKey: trpc.getAllEvents.queryKey() });
-        void queryClient.invalidateQueries({ queryKey: trpc.getDashboardStats.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getAllEvents.queryKey(),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.getDashboardStats.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to auto-complete events");
       },
-    })
+    }),
   );
 
   const createAnnouncementMutation = useMutation(
@@ -374,12 +475,14 @@ function AdminDashboard() {
         toast.success("Announcement created successfully!");
         resetAnnouncementForm();
         setShowAnnouncementForm(false);
-        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.listAnnouncements.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to create announcement");
       },
-    })
+    }),
   );
 
   const updateAnnouncementMutation = useMutation(
@@ -389,56 +492,62 @@ function AdminDashboard() {
         resetAnnouncementForm();
         setShowAnnouncementForm(false);
         setEditingAnnouncementId(null);
-        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.listAnnouncements.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update announcement");
       },
-    })
+    }),
   );
 
   const deleteAnnouncementMutation = useMutation(
     trpc.deleteAnnouncement.mutationOptions({
       onSuccess: () => {
         toast.success("Announcement deleted successfully!");
-        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.listAnnouncements.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to delete announcement");
       },
-    })
+    }),
   );
 
   const toggleAnnouncementMutation = useMutation(
     trpc.toggleAnnouncement.mutationOptions({
       onSuccess: () => {
         toast.success("Announcement status updated!");
-        void queryClient.invalidateQueries({ queryKey: trpc.listAnnouncements.queryKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.listAnnouncements.queryKey(),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update announcement status");
       },
-    })
+    }),
   );
 
   const onSubmit = (data: EventFormData) => {
     if (!token) return;
-    
+
     // Convert datetime-local strings to ISO strings
     const startDate = new Date(data.startDatetime);
     const endDate = new Date(data.endDatetime);
-    
+
     // Additional validation
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       toast.error("Invalid date format");
       return;
     }
-    
+
     if (endDate <= startDate) {
       toast.error("End date must be after start date");
       return;
     }
-    
+
     createEventMutation.mutate({
       authToken: token,
       name: data.name,
@@ -451,7 +560,7 @@ function AdminDashboard() {
 
   const onSubmitCooldownSettings = (data: RegistrationCooldownFormData) => {
     if (!token) return;
-    
+
     updateCooldownSettingsMutation.mutate({
       authToken: token,
       registrationCooldownEnabled: data.registrationCooldownEnabled,
@@ -469,7 +578,10 @@ function AdminDashboard() {
     });
   };
 
-  const handleUpdateEventStatus = (eventId: number, status: "ACTIVE" | "INACTIVE" | "COMPLETED") => {
+  const handleUpdateEventStatus = (
+    eventId: number,
+    status: "ACTIVE" | "INACTIVE" | "COMPLETED",
+  ) => {
     if (!token) return;
     updateEventStatusMutation.mutate({
       authToken: token,
@@ -478,7 +590,10 @@ function AdminDashboard() {
     });
   };
 
-  const handleToggleCheckIn = (registrationId: number, currentStatus: boolean) => {
+  const handleToggleCheckIn = (
+    registrationId: number,
+    currentStatus: boolean,
+  ) => {
     if (!token) return;
     updateCheckInMutation.mutate({
       authToken: token,
@@ -505,7 +620,10 @@ function AdminDashboard() {
     setShowCitizenModal(true);
   };
 
-  const handleToggleCitizenStatus = (citizenId: number, currentStatus: boolean) => {
+  const handleToggleCitizenStatus = (
+    citizenId: number,
+    currentStatus: boolean,
+  ) => {
     if (!token) return;
     toggleCitizenStatusMutation.mutate({
       authToken: token,
@@ -617,7 +735,8 @@ function AdminDashboard() {
 
   const handleDeleteAnnouncement = (id: number) => {
     if (!token) return;
-    if (!window.confirm("Are you sure you want to delete this announcement?")) return;
+    if (!window.confirm("Are you sure you want to delete this announcement?"))
+      return;
     deleteAnnouncementMutation.mutate({ authToken: token, id });
   };
 
@@ -626,29 +745,92 @@ function AdminDashboard() {
     toggleAnnouncementMutation.mutate({ authToken: token, id });
   };
 
+  const handleReportSearch = () => {
+    setAppliedReportFilters(reportFilters);
+    setReportPage(1);
+  };
+
+  const handleExportReport = async (mode: "html" | "pdf") => {
+    if (!token) return;
+
+    setIsExportingReport(true);
+    try {
+      const result = await queryClient.fetchQuery(
+        trpc.getRegistrationsReport.queryOptions({
+          authToken: token,
+          ...appliedReportFilters,
+          page: 1,
+          pageSize: 2000, // trae todo lo que cumple el filtro, no solo la página visible
+        }),
+      );
+
+      const selectedEventName = reportEventsQuery.data?.find(
+        (e) => e.id === appliedReportFilters.eventId,
+      )?.name;
+
+      const html = buildReportHtml(result.registrations, {
+        eventName: selectedEventName,
+        phoneNumber: appliedReportFilters.phoneNumber,
+        name: appliedReportFilters.name,
+      });
+
+      if (mode === "html") {
+        const blob = new Blob([html], { type: "text/html" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `report-${Date.now()}.html`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+          toast.error("Please allow pop-ups to export as PDF.");
+          return;
+        }
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.onload = () => {
+          printWindow.focus();
+          printWindow.print();
+        };
+      }
+
+      toast.success(`Exported ${result.registrations.length} records`);
+    } catch (error) {
+      toast.error("Failed to export report");
+      console.error("Export error:", error);
+    } finally {
+      setIsExportingReport(false);
+    }
+  };
+
   const handleExportCSV = async () => {
     if (!token) return;
-    
+
     setIsExportingCSV(true);
     try {
       const result = await queryClient.fetchQuery(
         trpc.exportCitizenData.queryOptions({
           authToken: token,
-        })
+        }),
       );
-      
+
       // Create a blob from the CSV data
       const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute("href", url);
       link.setAttribute("download", result.filename);
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast.success(`Exported ${result.rowCount} records to CSV`);
     } catch (error) {
       toast.error("Failed to export citizen data");
@@ -660,15 +842,15 @@ function AdminDashboard() {
 
   const handleExportExcel = async () => {
     if (!token) return;
-    
+
     setIsExportingExcel(true);
     try {
       const result = await queryClient.fetchQuery(
         trpc.exportRegistrationDataExcel.queryOptions({
           authToken: token,
-        })
+        }),
       );
-      
+
       // Convert base64 to blob
       const byteCharacters = atob(result.data);
       const byteNumbers = new Array(byteCharacters.length);
@@ -677,10 +859,10 @@ function AdminDashboard() {
       }
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: result.mimeType });
-      
+
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute("href", url);
       link.setAttribute("download", result.filename);
       link.style.visibility = "hidden";
@@ -688,7 +870,7 @@ function AdminDashboard() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       toast.success(`Exported ${result.rowCount} records to Excel`);
     } catch (error) {
       toast.error("Failed to export registration data");
@@ -700,27 +882,27 @@ function AdminDashboard() {
 
   const handleExportCitizenProfilesCSV = async () => {
     if (!token) return;
-    
+
     setIsExportingCSV(true);
     try {
       const result = await queryClient.fetchQuery(
         trpc.exportCitizenProfilesToCSV.queryOptions({
           authToken: token,
-        })
+        }),
       );
-      
+
       // Create a blob from the CSV data
       const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute("href", url);
       link.setAttribute("download", result.filename);
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast.success(`Exported ${result.rowCount} records to CSV`);
     } catch (error) {
       toast.error("Failed to export citizen profiles");
@@ -753,10 +935,16 @@ function AdminDashboard() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <BRAND_CONFIG.Icon className={`h-8 w-8 ${BRAND_CONFIG.iconColorClass}`} />
+              <BRAND_CONFIG.Icon
+                className={`h-8 w-8 ${BRAND_CONFIG.iconColorClass}`}
+              />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-sm text-gray-600">{BRAND_CONFIG.organizationName}</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Admin Dashboard
+                </h1>
+                <p className="text-sm text-gray-600">
+                  {BRAND_CONFIG.organizationName}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -767,11 +955,10 @@ function AdminDashboard() {
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </Link>
-              <Link
-                to="/profile"
-                className="text-right"
-              >
-                <p className="text-sm font-medium text-gray-900 hover:text-blue-600">{user.fullName}</p>
+              <Link to="/profile" className="text-right">
+                <p className="text-sm font-medium text-gray-900 hover:text-blue-600">
+                  {user.fullName}
+                </p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </Link>
               <button
@@ -869,6 +1056,19 @@ function AdminDashboard() {
               </div>
             </button>
             <button
+              onClick={() => setActiveTab("reports")}
+              className={`border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+                activeTab === "reports"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <FileBarChart className="h-4 w-4" />
+                <span>Reports</span>
+              </div>
+            </button>
+            <button
               onClick={() => setActiveTab("settings")}
               className={`border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
                 activeTab === "settings"
@@ -894,9 +1094,11 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Events</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Events
+                    </p>
                     <p className="mt-2 text-3xl font-bold text-gray-900">
-                      {statsQuery.isLoading ? "..." : stats?.totalEvents ?? 0}
+                      {statsQuery.isLoading ? "..." : (stats?.totalEvents ?? 0)}
                     </p>
                   </div>
                   <div className="rounded-full bg-blue-100 p-3">
@@ -908,9 +1110,13 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Registrations</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Registrations
+                    </p>
                     <p className="mt-2 text-3xl font-bold text-gray-900">
-                      {statsQuery.isLoading ? "..." : stats?.totalRegistrations ?? 0}
+                      {statsQuery.isLoading
+                        ? "..."
+                        : (stats?.totalRegistrations ?? 0)}
                     </p>
                   </div>
                   <div className="rounded-full bg-green-100 p-3">
@@ -922,9 +1128,13 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Check-in Rate</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Check-in Rate
+                    </p>
                     <p className="mt-2 text-3xl font-bold text-gray-900">
-                      {statsQuery.isLoading ? "..." : `${stats?.checkInRate ?? 0}%`}
+                      {statsQuery.isLoading
+                        ? "..."
+                        : `${stats?.checkInRate ?? 0}%`}
                     </p>
                   </div>
                   <div className="rounded-full bg-purple-100 p-3">
@@ -936,9 +1146,13 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Avg Capacity</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Avg Capacity
+                    </p>
                     <p className="mt-2 text-3xl font-bold text-gray-900">
-                      {statsQuery.isLoading ? "..." : `${stats?.avgCapacity ?? 0}%`}
+                      {statsQuery.isLoading
+                        ? "..."
+                        : `${stats?.avgCapacity ?? 0}%`}
                     </p>
                   </div>
                   <div className="rounded-full bg-rose-100 p-3">
@@ -953,9 +1167,13 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Active Events</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Active Events
+                    </p>
                     <p className="mt-2 text-2xl font-bold text-green-600">
-                      {statsQuery.isLoading ? "..." : stats?.activeEvents ?? 0}
+                      {statsQuery.isLoading
+                        ? "..."
+                        : (stats?.activeEvents ?? 0)}
                     </p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-green-600" />
@@ -965,9 +1183,13 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Completed Events</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Completed Events
+                    </p>
                     <p className="mt-2 text-2xl font-bold text-blue-600">
-                      {statsQuery.isLoading ? "..." : stats?.completedEvents ?? 0}
+                      {statsQuery.isLoading
+                        ? "..."
+                        : (stats?.completedEvents ?? 0)}
                     </p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-blue-600" />
@@ -977,9 +1199,11 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Users</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Users
+                    </p>
                     <p className="mt-2 text-2xl font-bold text-gray-900">
-                      {statsQuery.isLoading ? "..." : stats?.totalUsers ?? 0}
+                      {statsQuery.isLoading ? "..." : (stats?.totalUsers ?? 0)}
                     </p>
                   </div>
                   <Users className="h-8 w-8 text-gray-600" />
@@ -989,9 +1213,13 @@ function AdminDashboard() {
               <div className="rounded-xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Last 30 Days</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Last 30 Days
+                    </p>
                     <p className="mt-2 text-2xl font-bold text-gray-900">
-                      {statsQuery.isLoading ? "..." : stats?.recentRegistrations ?? 0}
+                      {statsQuery.isLoading
+                        ? "..."
+                        : (stats?.recentRegistrations ?? 0)}
                     </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-gray-600" />
@@ -1001,32 +1229,49 @@ function AdminDashboard() {
 
             {/* Quick Stats */}
             <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">Quick Statistics</h2>
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Quick Statistics
+              </h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="rounded-lg bg-green-50 p-4">
-                  <p className="text-sm font-medium text-green-700">Total Check-ins</p>
+                  <p className="text-sm font-medium text-green-700">
+                    Total Check-ins
+                  </p>
                   <p className="mt-1 text-2xl font-bold text-green-900">
-                    {statsQuery.isLoading ? "..." : stats?.checkedInCount ?? 0}
+                    {statsQuery.isLoading
+                      ? "..."
+                      : (stats?.checkedInCount ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-green-600">
                     Out of {stats?.totalRegistrations ?? 0} registrations
                   </p>
                 </div>
                 <div className="rounded-lg bg-yellow-50 p-4">
-                  <p className="text-sm font-medium text-yellow-700">Inactive Events</p>
-                  <p className="mt-1 text-2xl font-bold text-yellow-900">
-                    {statsQuery.isLoading ? "..." : stats?.inactiveEvents ?? 0}
+                  <p className="text-sm font-medium text-yellow-700">
+                    Inactive Events
                   </p>
-                  <p className="mt-1 text-xs text-yellow-600">Currently paused</p>
+                  <p className="mt-1 text-2xl font-bold text-yellow-900">
+                    {statsQuery.isLoading
+                      ? "..."
+                      : (stats?.inactiveEvents ?? 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-yellow-600">
+                    Currently paused
+                  </p>
                 </div>
                 <div className="rounded-lg bg-blue-50 p-4">
-                  <p className="text-sm font-medium text-blue-700">Pending Check-ins</p>
+                  <p className="text-sm font-medium text-blue-700">
+                    Pending Check-ins
+                  </p>
                   <p className="mt-1 text-2xl font-bold text-blue-900">
                     {statsQuery.isLoading
                       ? "..."
-                      : (stats?.totalRegistrations ?? 0) - (stats?.checkedInCount ?? 0)}
+                      : (stats?.totalRegistrations ?? 0) -
+                        (stats?.checkedInCount ?? 0)}
                   </p>
-                  <p className="mt-1 text-xs text-blue-600">Not yet checked in</p>
+                  <p className="mt-1 text-xs text-blue-600">
+                    Not yet checked in
+                  </p>
                 </div>
               </div>
             </div>
@@ -1038,7 +1283,9 @@ function AdminDashboard() {
             {/* Create Event Section */}
             <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Event Management</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Event Management
+                </h2>
                 <div className="flex space-x-2">
                   <button
                     onClick={handleAutoCompleteEvents}
@@ -1047,7 +1294,11 @@ function AdminDashboard() {
                     title="Mark expired events as completed"
                   >
                     <CheckCircle className="h-4 w-4" />
-                    <span>{autoCompleteEventsMutation.isPending ? "Processing..." : "Auto-Complete Events"}</span>
+                    <span>
+                      {autoCompleteEventsMutation.isPending
+                        ? "Processing..."
+                        : "Auto-Complete Events"}
+                    </span>
                   </button>
                   <button
                     onClick={() => setShowEventForm(!showEventForm)}
@@ -1060,7 +1311,10 @@ function AdminDashboard() {
               </div>
 
               {showEventForm && (
-                <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4 border-t pt-6">
+                <form
+                  onSubmit={handleSubmit(onSubmit)}
+                  className="mt-6 space-y-4 border-t pt-6"
+                >
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -1073,7 +1327,9 @@ function AdminDashboard() {
                         placeholder="e.g., Weekly Food Distribution"
                       />
                       {errors.name && (
-                        <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.name.message}
+                        </p>
                       )}
                     </div>
 
@@ -1088,13 +1344,16 @@ function AdminDashboard() {
                         placeholder="100"
                       />
                       {errors.availableBags && (
-                        <p className="mt-1 text-sm text-red-600">{errors.availableBags.message}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.availableBags.message}
+                        </p>
                       )}
                     </div>
 
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Start Date & Time <span className="text-red-500">*</span>
+                        Start Date & Time{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="datetime-local"
@@ -1102,7 +1361,9 @@ function AdminDashboard() {
                         className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       {errors.startDatetime && (
-                        <p className="mt-1 text-sm text-red-600">{errors.startDatetime.message}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.startDatetime.message}
+                        </p>
                       )}
                     </div>
 
@@ -1116,7 +1377,9 @@ function AdminDashboard() {
                         className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       {errors.endDatetime && (
-                        <p className="mt-1 text-sm text-red-600">{errors.endDatetime.message}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.endDatetime.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -1139,7 +1402,9 @@ function AdminDashboard() {
                       disabled={createEventMutation.isPending}
                       className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
                     >
-                      {createEventMutation.isPending ? "Creating..." : "Create Event"}
+                      {createEventMutation.isPending
+                        ? "Creating..."
+                        : "Create Event"}
                     </button>
                     <button
                       type="button"
@@ -1156,7 +1421,9 @@ function AdminDashboard() {
             {/* Event Filter */}
             <div className="mb-4 flex items-center space-x-2">
               <Filter className="h-5 w-5 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filter by status:</span>
+              <span className="text-sm font-medium text-gray-700">
+                Filter by status:
+              </span>
               <button
                 onClick={() => setEventStatusFilter(undefined)}
                 className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
@@ -1201,7 +1468,9 @@ function AdminDashboard() {
 
             {/* All Events List */}
             <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">All Events</h2>
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                All Events
+              </h2>
               {allEventsQuery.isLoading ? (
                 <p className="text-center text-gray-500">Loading events...</p>
               ) : allEventsQuery.data && allEventsQuery.data.length > 0 ? (
@@ -1213,7 +1482,9 @@ function AdminDashboard() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
-                          <h3 className="font-semibold text-gray-900">{event.name}</h3>
+                          <h3 className="font-semibold text-gray-900">
+                            {event.name}
+                          </h3>
                           <span
                             className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                               event.status === "ACTIVE"
@@ -1227,12 +1498,16 @@ function AdminDashboard() {
                           </span>
                         </div>
                         {event.description && (
-                          <p className="mt-1 text-sm text-gray-600">{event.description}</p>
+                          <p className="mt-1 text-sm text-gray-600">
+                            {event.description}
+                          </p>
                         )}
                         <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
                           <span className="flex items-center space-x-1">
                             <Clock className="h-4 w-4" />
-                            <span>{new Date(event.startDatetime).toLocaleString()}</span>
+                            <span>
+                              {new Date(event.startDatetime).toLocaleString()}
+                            </span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <Users className="h-4 w-4" />
@@ -1256,7 +1531,9 @@ function AdminDashboard() {
                         <div className="flex space-x-2">
                           {event.status !== "ACTIVE" && (
                             <button
-                              onClick={() => handleUpdateEventStatus(event.id, "ACTIVE")}
+                              onClick={() =>
+                                handleUpdateEventStatus(event.id, "ACTIVE")
+                              }
                               disabled={updateEventStatusMutation.isPending}
                               className="rounded-lg bg-green-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-green-700 disabled:bg-gray-400"
                             >
@@ -1265,7 +1542,9 @@ function AdminDashboard() {
                           )}
                           {event.status !== "INACTIVE" && (
                             <button
-                              onClick={() => handleUpdateEventStatus(event.id, "INACTIVE")}
+                              onClick={() =>
+                                handleUpdateEventStatus(event.id, "INACTIVE")
+                              }
                               disabled={updateEventStatusMutation.isPending}
                               className="rounded-lg bg-yellow-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-yellow-700 disabled:bg-gray-400"
                             >
@@ -1274,7 +1553,9 @@ function AdminDashboard() {
                           )}
                           {event.status !== "COMPLETED" && (
                             <button
-                              onClick={() => handleUpdateEventStatus(event.id, "COMPLETED")}
+                              onClick={() =>
+                                handleUpdateEventStatus(event.id, "COMPLETED")
+                              }
                               disabled={updateEventStatusMutation.isPending}
                               className="rounded-lg bg-gray-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-gray-700 disabled:bg-gray-400"
                             >
@@ -1305,7 +1586,9 @@ function AdminDashboard() {
                 </div>
               ) : (
                 <p className="text-center text-gray-500">
-                  No events found. {eventStatusFilter && "Try changing the filter or"} Create one to get started!
+                  No events found.{" "}
+                  {eventStatusFilter && "Try changing the filter or"} Create one
+                  to get started!
                 </p>
               )}
             </div>
@@ -1314,7 +1597,9 @@ function AdminDashboard() {
             {qrCodeUrl && (
               <div className="mt-8 rounded-xl bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-gray-900">Generated QR Code</h2>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Generated QR Code
+                  </h2>
                   <button
                     onClick={() => setQrCodeUrl("")}
                     className="text-gray-500 hover:text-gray-700"
@@ -1330,8 +1615,12 @@ function AdminDashboard() {
                       className="h-48 w-48"
                     />
                   </div>
-                  <p className="mb-2 text-sm font-medium text-gray-700">Registration URL:</p>
-                  <p className="mb-4 break-all text-sm text-gray-600">{qrCodeUrl}</p>
+                  <p className="mb-2 text-sm font-medium text-gray-700">
+                    Registration URL:
+                  </p>
+                  <p className="mb-4 break-all text-sm text-gray-600">
+                    {qrCodeUrl}
+                  </p>
                   <button
                     onClick={() => {
                       void navigator.clipboard.writeText(qrCodeUrl);
@@ -1350,7 +1639,9 @@ function AdminDashboard() {
         {activeTab === "registrations" && (
           <div className="rounded-xl bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Search Registrations</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Search Registrations
+              </h2>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setShowQRScanner(true)}
@@ -1401,11 +1692,15 @@ function AdminDashboard() {
                   <tbody className="text-sm text-gray-900">
                     {searchRegistrationsQuery.data.registrations.map((reg) => (
                       <tr key={reg.id} className="border-b border-gray-100">
-                        <td className="py-3 font-mono text-xs">{reg.orderNumber}</td>
+                        <td className="py-3 font-mono text-xs">
+                          {reg.orderNumber}
+                        </td>
                         <td className="py-3">{reg.fullName}</td>
                         <td className="py-3">{reg.phoneNumber}</td>
                         <td className="py-3">{reg.eventName}</td>
-                        <td className="py-3">{new Date(reg.registrationDate).toLocaleString()}</td>
+                        <td className="py-3">
+                          {new Date(reg.registrationDate).toLocaleString()}
+                        </td>
                         <td className="py-3">
                           {reg.checkedIn ? (
                             <span className="inline-flex items-center space-x-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
@@ -1421,7 +1716,9 @@ function AdminDashboard() {
                         </td>
                         <td className="py-3">
                           <button
-                            onClick={() => handleToggleCheckIn(reg.id, reg.checkedIn)}
+                            onClick={() =>
+                              handleToggleCheckIn(reg.id, reg.checkedIn)
+                            }
                             disabled={updateCheckInMutation.isPending}
                             className={`rounded-lg px-3 py-1 text-xs font-semibold text-white transition-colors disabled:bg-gray-400 ${
                               reg.checkedIn
@@ -1452,7 +1749,9 @@ function AdminDashboard() {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Filter className="h-5 w-5 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Filter by role:</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Filter by role:
+                </span>
                 <button
                   onClick={() => setUserRoleFilter(undefined)}
                   className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
@@ -1509,7 +1808,9 @@ function AdminDashboard() {
                   className="flex items-center space-x-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:bg-gray-400"
                 >
                   <Download className="h-4 w-4" />
-                  <span>{isExportingExcel ? "Exporting..." : "Export Excel"}</span>
+                  <span>
+                    {isExportingExcel ? "Exporting..." : "Export Excel"}
+                  </span>
                 </button>
                 <button
                   onClick={handleCreateStaff}
@@ -1530,7 +1831,9 @@ function AdminDashboard() {
 
             {/* Users List */}
             <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">User Management</h2>
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                User Management
+              </h2>
               {allUsersQuery.isLoading ? (
                 <p className="text-center text-gray-500">Loading users...</p>
               ) : allUsersQuery.data && allUsersQuery.data.length > 0 ? (
@@ -1583,32 +1886,45 @@ function AdminDashboard() {
                             )}
                           </td>
                           <td className="py-3">{user.registrationCount}</td>
-                          <td className="py-3">{new Date(user.createdAt).toLocaleDateString()}</td>
+                          <td className="py-3">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </td>
                           <td className="py-3">
                             {user.role === "CITIZEN" && (
                               <div className="flex space-x-2">
                                 <button
-                                  onClick={() => handleEditCitizen({
-                                    id: user.id,
-                                    username: user.username,
-                                    fullName: user.fullName,
-                                    email: user.email,
-                                    phoneNumber: user.phoneNumber,
-                                  })}
+                                  onClick={() =>
+                                    handleEditCitizen({
+                                      id: user.id,
+                                      username: user.username,
+                                      fullName: user.fullName,
+                                      email: user.email,
+                                      phoneNumber: user.phoneNumber,
+                                    })
+                                  }
                                   className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
                                   title="Edit citizen"
                                 >
                                   <Edit className="h-3 w-3" />
                                 </button>
                                 <button
-                                  onClick={() => handleToggleCitizenStatus(user.id, user.isActive)}
-                                  disabled={toggleCitizenStatusMutation.isPending}
+                                  onClick={() =>
+                                    handleToggleCitizenStatus(
+                                      user.id,
+                                      user.isActive,
+                                    )
+                                  }
+                                  disabled={
+                                    toggleCitizenStatusMutation.isPending
+                                  }
                                   className={`rounded-lg px-2 py-1 text-xs font-semibold text-white transition-colors disabled:bg-gray-400 ${
                                     user.isActive
                                       ? "bg-red-600 hover:bg-red-700"
                                       : "bg-green-600 hover:bg-green-700"
                                   }`}
-                                  title={user.isActive ? "Deactivate" : "Activate"}
+                                  title={
+                                    user.isActive ? "Deactivate" : "Activate"
+                                  }
                                 >
                                   {user.isActive ? (
                                     <UserX className="h-3 w-3" />
@@ -1621,27 +1937,36 @@ function AdminDashboard() {
                             {user.role === "STAFF" && (
                               <div className="flex space-x-2">
                                 <button
-                                  onClick={() => handleEditStaff({
-                                    id: user.id,
-                                    username: user.username,
-                                    fullName: user.fullName,
-                                    email: user.email,
-                                    phoneNumber: user.phoneNumber,
-                                  })}
+                                  onClick={() =>
+                                    handleEditStaff({
+                                      id: user.id,
+                                      username: user.username,
+                                      fullName: user.fullName,
+                                      email: user.email,
+                                      phoneNumber: user.phoneNumber,
+                                    })
+                                  }
                                   className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
                                   title="Edit staff"
                                 >
                                   <Edit className="h-3 w-3" />
                                 </button>
                                 <button
-                                  onClick={() => handleToggleStaffStatus(user.id, user.isActive)}
+                                  onClick={() =>
+                                    handleToggleStaffStatus(
+                                      user.id,
+                                      user.isActive,
+                                    )
+                                  }
                                   disabled={toggleStaffStatusMutation.isPending}
                                   className={`rounded-lg px-2 py-1 text-xs font-semibold text-white transition-colors disabled:bg-gray-400 ${
                                     user.isActive
                                       ? "bg-red-600 hover:bg-red-700"
                                       : "bg-green-600 hover:bg-green-700"
                                   }`}
-                                  title={user.isActive ? "Deactivate" : "Activate"}
+                                  title={
+                                    user.isActive ? "Deactivate" : "Activate"
+                                  }
                                 >
                                   {user.isActive ? (
                                     <UserX className="h-3 w-3" />
@@ -1670,7 +1995,9 @@ function AdminDashboard() {
           <>
             {/* Export Buttons */}
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Citizen Profiles</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Citizen Profiles
+              </h2>
               <div className="flex space-x-2">
                 <button
                   onClick={handleExportCitizenProfilesCSV}
@@ -1686,7 +2013,9 @@ function AdminDashboard() {
                   className="flex items-center space-x-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:bg-gray-400"
                 >
                   <Download className="h-4 w-4" />
-                  <span>{isExportingExcel ? "Exporting..." : "Export Excel"}</span>
+                  <span>
+                    {isExportingExcel ? "Exporting..." : "Export Excel"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -1694,11 +2023,15 @@ function AdminDashboard() {
             {/* Citizen Profiles List */}
             <div className="rounded-xl bg-white p-6 shadow-sm">
               <p className="mb-4 text-sm text-gray-600">
-                All registered citizens, including those who registered without creating an account.
+                All registered citizens, including those who registered without
+                creating an account.
               </p>
               {citizenProfilesQuery.isLoading ? (
-                <p className="text-center text-gray-500">Loading citizen profiles...</p>
-              ) : citizenProfilesQuery.data && citizenProfilesQuery.data.length > 0 ? (
+                <p className="text-center text-gray-500">
+                  Loading citizen profiles...
+                </p>
+              ) : citizenProfilesQuery.data &&
+                citizenProfilesQuery.data.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -1716,8 +2049,13 @@ function AdminDashboard() {
                     </thead>
                     <tbody className="text-sm text-gray-900">
                       {citizenProfilesQuery.data.map((profile) => (
-                        <tr key={profile.id} className="border-b border-gray-100">
-                          <td className="py-3 font-medium">{profile.fullName}</td>
+                        <tr
+                          key={profile.id}
+                          className="border-b border-gray-100"
+                        >
+                          <td className="py-3 font-medium">
+                            {profile.fullName}
+                          </td>
                           <td className="py-3">{profile.phoneNumber}</td>
                           <td className="py-3">{profile.email || "—"}</td>
                           <td className="py-3">
@@ -1749,8 +2087,12 @@ function AdminDashboard() {
                               {profile.registrationCount}
                             </span>
                           </td>
-                          <td className="py-3">{new Date(profile.createdAt).toLocaleDateString()}</td>
-                          <td className="py-3">{new Date(profile.updatedAt).toLocaleDateString()}</td>
+                          <td className="py-3">
+                            {new Date(profile.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="py-3">
+                            {new Date(profile.updatedAt).toLocaleDateString()}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1760,7 +2102,9 @@ function AdminDashboard() {
                   </div>
                 </div>
               ) : (
-                <p className="text-center text-gray-500">No citizen profiles found.</p>
+                <p className="text-center text-gray-500">
+                  No citizen profiles found.
+                </p>
               )}
             </div>
           </>
@@ -1771,10 +2115,13 @@ function AdminDashboard() {
             <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Signup Screen Announcements</h2>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Signup Screen Announcements
+                  </h2>
                   <p className="mt-1 text-sm text-gray-600">
-                    Post a message on the public registration screen — e.g. to warn citizens that an
-                    event has been canceled or is unavailable.
+                    Post a message on the public registration screen — e.g. to
+                    warn citizens that an event has been canceled or is
+                    unavailable.
                   </p>
                 </div>
                 <button
@@ -1831,7 +2178,9 @@ function AdminDashboard() {
                       placeholder="e.g., Today's food distribution event has been canceled due to weather. Please check back for the next scheduled date."
                     />
                     {announcementErrors.message && (
-                      <p className="mt-1 text-sm text-red-600">{announcementErrors.message.message}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {announcementErrors.message.message}
+                      </p>
                     )}
                   </div>
 
@@ -1851,7 +2200,8 @@ function AdminDashboard() {
                       ))}
                     </select>
                     <p className="mt-1 text-xs text-gray-500">
-                      Leave as "All events" to show this message regardless of which event a citizen selects.
+                      Leave as "All events" to show this message regardless of
+                      which event a citizen selects.
                     </p>
                   </div>
 
@@ -1882,10 +2232,14 @@ function AdminDashboard() {
                   <div className="flex space-x-3">
                     <button
                       type="submit"
-                      disabled={createAnnouncementMutation.isPending || updateAnnouncementMutation.isPending}
+                      disabled={
+                        createAnnouncementMutation.isPending ||
+                        updateAnnouncementMutation.isPending
+                      }
                       className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
                     >
-                      {createAnnouncementMutation.isPending || updateAnnouncementMutation.isPending
+                      {createAnnouncementMutation.isPending ||
+                      updateAnnouncementMutation.isPending
                         ? "Saving..."
                         : editingAnnouncementId
                           ? "Update Announcement"
@@ -1909,10 +2263,15 @@ function AdminDashboard() {
 
             {/* Announcements List */}
             <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">All Announcements</h2>
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                All Announcements
+              </h2>
               {announcementsQuery.isLoading ? (
-                <p className="text-center text-gray-500">Loading announcements...</p>
-              ) : announcementsQuery.data && announcementsQuery.data.length > 0 ? (
+                <p className="text-center text-gray-500">
+                  Loading announcements...
+                </p>
+              ) : announcementsQuery.data &&
+                announcementsQuery.data.length > 0 ? (
                 <div className="space-y-4">
                   {announcementsQuery.data.map((announcement) => {
                     const typeBadgeClass: Record<string, string> = {
@@ -1929,11 +2288,14 @@ function AdminDashboard() {
                         <div className="flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             {announcement.title && (
-                              <h3 className="font-semibold text-gray-900">{announcement.title}</h3>
+                              <h3 className="font-semibold text-gray-900">
+                                {announcement.title}
+                              </h3>
                             )}
                             <span
                               className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                                typeBadgeClass[announcement.type] ?? typeBadgeClass.info
+                                typeBadgeClass[announcement.type] ??
+                                typeBadgeClass.info
                               }`}
                             >
                               {announcement.type}
@@ -1948,16 +2310,28 @@ function AdminDashboard() {
                               {announcement.isActive ? "Active" : "Inactive"}
                             </span>
                           </div>
-                          <p className="mt-1 text-sm text-gray-700">{announcement.message}</p>
+                          <p className="mt-1 text-sm text-gray-700">
+                            {announcement.message}
+                          </p>
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                             <span>
                               Event: {announcement.event?.name ?? "All events"}
                             </span>
                             {announcement.startDate && (
-                              <span>From: {new Date(announcement.startDate).toLocaleString()}</span>
+                              <span>
+                                From:{" "}
+                                {new Date(
+                                  announcement.startDate,
+                                ).toLocaleString()}
+                              </span>
                             )}
                             {announcement.endDate && (
-                              <span>Until: {new Date(announcement.endDate).toLocaleString()}</span>
+                              <span>
+                                Until:{" "}
+                                {new Date(
+                                  announcement.endDate,
+                                ).toLocaleString()}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -1980,19 +2354,25 @@ function AdminDashboard() {
                             <Edit className="h-3 w-3" />
                           </button>
                           <button
-                            onClick={() => handleToggleAnnouncement(announcement.id)}
+                            onClick={() =>
+                              handleToggleAnnouncement(announcement.id)
+                            }
                             disabled={toggleAnnouncementMutation.isPending}
                             className={`rounded-lg px-2 py-1 text-xs font-semibold text-white transition-colors disabled:bg-gray-400 ${
                               announcement.isActive
                                 ? "bg-yellow-600 hover:bg-yellow-700"
                                 : "bg-green-600 hover:bg-green-700"
                             }`}
-                            title={announcement.isActive ? "Deactivate" : "Activate"}
+                            title={
+                              announcement.isActive ? "Deactivate" : "Activate"
+                            }
                           >
                             <Power className="h-3 w-3" />
                           </button>
                           <button
-                            onClick={() => handleDeleteAnnouncement(announcement.id)}
+                            onClick={() =>
+                              handleDeleteAnnouncement(announcement.id)
+                            }
                             disabled={deleteAnnouncementMutation.isPending}
                             className="rounded-lg bg-red-600 px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:bg-gray-400"
                             title="Delete"
@@ -2006,34 +2386,223 @@ function AdminDashboard() {
                 </div>
               ) : (
                 <p className="text-center text-gray-500">
-                  No announcements yet. Create one to notify citizens on the registration screen.
+                  No announcements yet. Create one to notify citizens on the
+                  registration screen.
                 </p>
               )}
             </div>
           </>
         )}
 
+        {activeTab === "reports" && (
+          <div className="rounded-xl bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-bold text-gray-900">
+              Registration Report
+            </h2>
+
+            <div className="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 md:grid-cols-4">
+              <select
+                value={reportFilters.eventId ?? ""}
+                onChange={(e) =>
+                  setReportFilters((f) => ({
+                    ...f,
+                    eventId: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  }))
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All events</option>
+                {reportEventsQuery.data?.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.name} —{" "}
+                    {new Date(ev.startDatetime).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder="Phone number"
+                value={reportFilters.phoneNumber ?? ""}
+                onChange={(e) =>
+                  setReportFilters((f) => ({
+                    ...f,
+                    phoneNumber: e.target.value,
+                  }))
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              <input
+                type="text"
+                placeholder="First or last name"
+                value={reportFilters.name ?? ""}
+                onChange={(e) =>
+                  setReportFilters((f) => ({ ...f, name: e.target.value }))
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              <button
+                onClick={handleReportSearch}
+                className="flex items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+              >
+                <Search className="h-4 w-4" />
+                <span>Search</span>
+              </button>
+            </div>
+
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                {reportDataQuery.isLoading
+                  ? "Loading..."
+                  : `${reportDataQuery.data?.totalCount ?? 0} result(s)`}
+              </p>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleExportReport("html")}
+                  disabled={
+                    isExportingReport || !reportDataQuery.data?.totalCount
+                  }
+                  className="flex items-center space-x-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>
+                    {isExportingReport ? "Exporting..." : "Export HTML"}
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleExportReport("pdf")}
+                  disabled={
+                    isExportingReport || !reportDataQuery.data?.totalCount
+                  }
+                  className="flex items-center space-x-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>
+                    {isExportingReport ? "Exporting..." : "Export PDF"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {reportDataQuery.isLoading ? (
+              <p className="py-8 text-center text-gray-500">Loading...</p>
+            ) : reportDataQuery.data &&
+              reportDataQuery.data.registrations.length > 0 ? (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-left text-sm font-medium text-gray-600">
+                        <th className="pb-3">Order #</th>
+                        <th className="pb-3">Name</th>
+                        <th className="pb-3">Phone</th>
+                        <th className="pb-3">Event</th>
+                        <th className="pb-3">Date</th>
+                        <th className="pb-3">Check-in</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm text-gray-900">
+                      {reportDataQuery.data.registrations.map((r) => (
+                        <tr key={r.id} className="border-b border-gray-100">
+                          <td className="py-3 font-mono text-xs">
+                            {r.orderNumber}
+                          </td>
+                          <td className="py-3">
+                            {r.firstName} {r.lastName}
+                          </td>
+                          <td className="py-3">{r.phoneNumber}</td>
+                          <td className="py-3">{r.event.name}</td>
+                          <td className="py-3">
+                            {new Date(r.registrationDate).toLocaleDateString()}
+                          </td>
+                          <td className="py-3">
+                            {r.checkedIn ? (
+                              <span className="inline-flex items-center space-x-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                                <CheckCircle className="h-3 w-3" />
+                                <span>Checked In</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center space-x-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700">
+                                <Clock className="h-3 w-3" />
+                                <span>Pending</span>
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-sm text-gray-500">
+                    Page {reportDataQuery.data.page} of{" "}
+                    {reportDataQuery.data.totalPages}
+                  </span>
+                  <div className="flex space-x-2">
+                    <button
+                      disabled={reportPage <= 1}
+                      onClick={() => setReportPage((p) => p - 1)}
+                      className="rounded-lg border border-gray-300 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      disabled={
+                        reportPage >= (reportDataQuery.data?.totalPages ?? 1)
+                      }
+                      onClick={() => setReportPage((p) => p + 1)}
+                      className="rounded-lg border border-gray-300 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="py-12 text-center">
+                <FileBarChart className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-4 text-gray-500">No registrations found</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "settings" && (
           <div className="space-y-8">
             {/* Registration Cooldown Settings */}
             <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">Registration Cooldown Settings</h2>
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Registration Cooldown Settings
+              </h2>
               <p className="mb-6 text-sm text-gray-600">
-                Configure how often citizens can register for food distribution events.
+                Configure how often citizens can register for food distribution
+                events.
               </p>
 
               {cooldownSettingsQuery.isLoading ? (
                 <p className="text-center text-gray-500">Loading settings...</p>
               ) : (
-                <form onSubmit={handleSubmitCooldown(onSubmitCooldownSettings)} className="space-y-6">
+                <form
+                  onSubmit={handleSubmitCooldown(onSubmitCooldownSettings)}
+                  className="space-y-6"
+                >
                   {/* Enable/Disable Toggle */}
                   <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
                     <div className="flex-1">
-                      <label htmlFor="cooldownEnabled" className="block text-sm font-medium text-gray-900">
+                      <label
+                        htmlFor="cooldownEnabled"
+                        className="block text-sm font-medium text-gray-900"
+                      >
                         Enable Registration Cooldown
                       </label>
                       <p className="mt-1 text-sm text-gray-600">
-                        When enabled, citizens must wait a specified number of days between registrations.
+                        When enabled, citizens must wait a specified number of
+                        days between registrations.
                       </p>
                     </div>
                     <div className="ml-4">
@@ -2048,14 +2617,19 @@ function AdminDashboard() {
 
                   {/* Days Input */}
                   <div className={cooldownEnabled ? "" : "opacity-50"}>
-                    <label htmlFor="cooldownDays" className="mb-2 block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="cooldownDays"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
                       Number of Days <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="cooldownDays"
                       type="number"
                       disabled={!cooldownEnabled}
-                      {...registerCooldown("registrationCooldownDays", { valueAsNumber: true })}
+                      {...registerCooldown("registrationCooldownDays", {
+                        valueAsNumber: true,
+                      })}
                       className="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="14"
                       min="1"
@@ -2067,18 +2641,22 @@ function AdminDashboard() {
                       </p>
                     )}
                     <p className="mt-2 text-sm text-gray-500">
-                      Citizens will need to wait this many days after their last registration before they can register again.
+                      Citizens will need to wait this many days after their last
+                      registration before they can register again.
                     </p>
                   </div>
 
                   {/* Current Settings Display */}
                   {cooldownSettingsQuery.data && (
                     <div className="rounded-lg bg-blue-50 p-4">
-                      <h3 className="mb-2 text-sm font-semibold text-blue-900">Current Settings</h3>
+                      <h3 className="mb-2 text-sm font-semibold text-blue-900">
+                        Current Settings
+                      </h3>
                       <div className="space-y-1 text-sm text-blue-800">
                         <p>
                           <span className="font-medium">Status:</span>{" "}
-                          {cooldownSettingsQuery.data.registrationCooldownEnabled ? (
+                          {cooldownSettingsQuery.data
+                            .registrationCooldownEnabled ? (
                             <span className="text-green-700">Enabled</span>
                           ) : (
                             <span className="text-red-700">Disabled</span>
@@ -2086,7 +2664,8 @@ function AdminDashboard() {
                         </p>
                         <p>
                           <span className="font-medium">Cooldown Period:</span>{" "}
-                          {cooldownSettingsQuery.data.registrationCooldownDays} days
+                          {cooldownSettingsQuery.data.registrationCooldownDays}{" "}
+                          days
                         </p>
                       </div>
                     </div>
@@ -2099,7 +2678,9 @@ function AdminDashboard() {
                       disabled={updateCooldownSettingsMutation.isPending}
                       className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
                     >
-                      {updateCooldownSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+                      {updateCooldownSettingsMutation.isPending
+                        ? "Saving..."
+                        : "Save Settings"}
                     </button>
                   </div>
                 </form>
@@ -2114,7 +2695,9 @@ function AdminDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Event Details</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Event Details
+              </h2>
               <button
                 onClick={() => setSelectedEventDetails(null)}
                 className="text-gray-500 hover:text-gray-700"
@@ -2128,7 +2711,9 @@ function AdminDashboard() {
                 {eventDetailsQuery.data.name}
               </h3>
               {eventDetailsQuery.data.description && (
-                <p className="mt-1 text-sm text-gray-600">{eventDetailsQuery.data.description}</p>
+                <p className="mt-1 text-sm text-gray-600">
+                  {eventDetailsQuery.data.description}
+                </p>
               )}
               <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -2147,15 +2732,20 @@ function AdminDashboard() {
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Capacity:</span>{" "}
-                  {eventDetailsQuery.data.registeredCount} / {eventDetailsQuery.data.availableBags}
+                  {eventDetailsQuery.data.registeredCount} /{" "}
+                  {eventDetailsQuery.data.availableBags}
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Start:</span>{" "}
-                  {new Date(eventDetailsQuery.data.startDatetime).toLocaleString()}
+                  {new Date(
+                    eventDetailsQuery.data.startDatetime,
+                  ).toLocaleString()}
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">End:</span>{" "}
-                  {new Date(eventDetailsQuery.data.endDatetime).toLocaleString()}
+                  {new Date(
+                    eventDetailsQuery.data.endDatetime,
+                  ).toLocaleString()}
                 </div>
               </div>
             </div>
@@ -2180,10 +2770,14 @@ function AdminDashboard() {
                   <tbody className="text-sm text-gray-900">
                     {eventDetailsQuery.data.registrations.map((reg) => (
                       <tr key={reg.id} className="border-b border-gray-100">
-                        <td className="py-3 font-mono text-xs">{reg.orderNumber}</td>
+                        <td className="py-3 font-mono text-xs">
+                          {reg.orderNumber}
+                        </td>
                         <td className="py-3">{reg.fullName}</td>
                         <td className="py-3">{reg.phoneNumber}</td>
-                        <td className="py-3">{new Date(reg.registrationDate).toLocaleString()}</td>
+                        <td className="py-3">
+                          {new Date(reg.registrationDate).toLocaleString()}
+                        </td>
                         <td className="py-3">
                           {reg.checkedIn ? (
                             <span className="inline-flex items-center space-x-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
@@ -2199,7 +2793,9 @@ function AdminDashboard() {
                         </td>
                         <td className="py-3">
                           <button
-                            onClick={() => handleToggleCheckIn(reg.id, reg.checkedIn)}
+                            onClick={() =>
+                              handleToggleCheckIn(reg.id, reg.checkedIn)
+                            }
                             disabled={updateCheckInMutation.isPending}
                             className={`rounded-lg px-3 py-1 text-xs font-semibold text-white transition-colors disabled:bg-gray-400 ${
                               reg.checkedIn
@@ -2252,4 +2848,103 @@ function AdminDashboard() {
       />
     </div>
   );
+}
+
+// ---- Report export helpers ----
+
+function buildReportHtml(
+  registrations: Array<{
+    orderNumber: string;
+    firstName: string;
+    middleName: string | null;
+    lastName: string;
+    phoneNumber: string;
+    email: string | null;
+    event: { name: string };
+    registrationDate: string | Date;
+    address: string | null;
+    apartmentSuite: string | null;
+    cityTown: string | null;
+    stateProvince: string | null;
+    zipPostalCode: string | null;
+    totalIndividuals: number;
+    isHomeless: boolean;
+    checkedIn: boolean;
+    checkedInAt: string | Date | null;
+    registeredBy: string;
+  }>,
+  filters: { eventName?: string; phoneNumber?: string; name?: string },
+) {
+  const generatedAt = new Date().toLocaleString("en-US");
+  const filterSummary =
+    [
+      filters.eventName ? `Event/Evento: ${filters.eventName}` : null,
+      filters.phoneNumber ? `Phone/Teléfono: ${filters.phoneNumber}` : null,
+      filters.name ? `Name/Nombre: ${filters.name}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ") || "No filters applied / Sin filtros aplicados";
+
+  const recordsHtml = registrations
+    .map(
+      (r, idx) => `
+    <section class="record">
+      <div class="record-header">
+        <span>Record / Registro ${idx + 1} of/de ${registrations.length}</span>
+        <span>Order / Orden: ${r.orderNumber}</span>
+      </div>
+      <table class="record-table">
+        <tr><th>Full name / Nombre completo</th><td>${r.firstName} ${r.middleName ?? ""} ${r.lastName}</td></tr>
+        <tr><th>Phone / Teléfono</th><td>${r.phoneNumber}</td></tr>
+        <tr><th>Email / Correo</th><td>${r.email ?? "—"}</td></tr>
+        <tr><th>Event / Evento</th><td>${r.event.name}</td></tr>
+        <tr><th>Registration date / Fecha de registro</th><td>${new Date(r.registrationDate).toLocaleString("en-US")}</td></tr>
+        <tr><th>Address / Dirección</th><td>${
+          [
+            r.address,
+            r.apartmentSuite,
+            r.cityTown,
+            r.stateProvince,
+            r.zipPostalCode,
+          ]
+            .filter(Boolean)
+            .join(", ") || "—"
+        }</td></tr>
+        <tr><th>Total individuals / Total de individuos</th><td>${r.totalIndividuals}</td></tr>
+        <tr><th>Homeless? / ¿Sin hogar?</th><td>${r.isHomeless ? "Yes / Sí" : "No"}</td></tr>
+        <tr><th>Checked in / Check-in</th><td>${
+          r.checkedIn
+            ? `Yes / Sí (${r.checkedInAt ? new Date(r.checkedInAt).toLocaleString("en-US") : ""})`
+            : "No"
+        }</td></tr>
+        <tr><th>Registered by / Registrado por</th><td>${r.registeredBy}</td></tr>
+      </table>
+    </section>`,
+    )
+    .join("");
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8" /><title>Registration Report / Reporte de Registros — CCH</title>
+<style>
+  body { font-family: -apple-system, Arial, sans-serif; color: #1f2937; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .meta { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+  .record {
+    border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; margin-bottom: 20px;
+    page-break-after: always; break-inside: avoid;
+  }
+  .record:last-child { page-break-after: auto; }
+  .record-header {
+    display: flex; justify-content: space-between; font-weight: 600;
+    margin-bottom: 10px; border-bottom: 2px solid #2563eb; padding-bottom: 6px;
+  }
+  .record-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .record-table th { text-align: left; width: 220px; padding: 4px 8px; color: #4b5563; vertical-align: top; }
+  .record-table td { padding: 4px 8px; }
+</style></head>
+<body>
+  <h1>Registration Report / Reporte de Registros</h1>
+  <div class="meta">Generated/Generado: ${generatedAt} · ${filterSummary} · Total: ${registrations.length}</div>
+  ${recordsHtml}
+</body></html>`;
 }
